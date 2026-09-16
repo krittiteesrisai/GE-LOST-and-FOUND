@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
   projectId: "resolute-mechanic-z53bd",
@@ -15,12 +14,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "ai-studio-5697621d-4a6b-4994-bdec-e088fb1401d9");
-const storage = getStorage(app);
 
 export { 
   app, 
   db, 
-  storage, 
   collection, 
   addDoc, 
   getDocs, 
@@ -31,8 +28,5 @@ export {
   query, 
   orderBy, 
   serverTimestamp, 
-  Timestamp,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL
+  Timestamp
 };

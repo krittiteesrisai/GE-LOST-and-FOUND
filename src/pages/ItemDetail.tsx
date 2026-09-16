@@ -141,6 +141,15 @@ export default function ItemDetail() {
                 </div>
               )}
             </div>
+
+            {item.adminNote && (
+              <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                <h3 className="text-sm font-semibold text-yellow-800 mb-1 flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> บันทึกจากแอดมิน
+                </h3>
+                <p className="text-sm text-yellow-900">{item.adminNote}</p>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-6">

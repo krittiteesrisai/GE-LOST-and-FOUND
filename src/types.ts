@@ -25,5 +25,6 @@ export interface Item {
   contact?: string; // Contact info (phone/line/email) - wait, it is required for lost, maybe for found too
   imageUrl?: string; // base64 or URL
   status: ItemStatus;
+  adminNote?: string; // For admins to leave a note
   createdAt?: any;
 }

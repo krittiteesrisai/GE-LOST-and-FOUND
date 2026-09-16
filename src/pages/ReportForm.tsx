@@ -3,18 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CATEGORIES, ItemType } from '../types';
+import { ShieldUser } from 'lucide-react';
 
 export default function ReportForm() {
   const { type, id } = useParams<{ type?: string, id?: string }>();
   const navigate = useNavigate();
   // If we have an id, we are in edit mode
   const isEditMode = !!id;
-  const isLost = type === 'lost';
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   // Form State
+  const [itemType, setItemType] = useState<string>(type || '');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [description, setDescription] = useState('');
@@ -25,6 +26,10 @@ export default function ReportForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [existingImageUrl, setExistingImageUrl] = useState<string>('');
+  const [adminNote, setAdminNote] = useState('');
+
+  const isLost = itemType === 'lost';
+  const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -35,6 +40,7 @@ export default function ReportForm() {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
+            setItemType(data.type || 'found'); // load type from db
             setTitle(data.title);
             setCategory(data.category);
             setDescription(data.description);
@@ -43,6 +49,7 @@ export default function ReportForm() {
             setDate(data.date || '');
             setContact(data.contact);
             setExistingImageUrl(data.imageUrl || '');
+            setAdminNote(data.adminNote || '');
           } else {
             setError('ไม่พบข้อมูลที่ต้องการแก้ไข');
           }
@@ -138,6 +145,11 @@ export default function ReportForm() {
         itemData.currentLocation = currentLocation;
       }
 
+      if (isAdmin && isEditMode) {
+        itemData.type = itemType; // allow admin to change type
+        itemData.adminNote = adminNote;
+      }
+
       if (isEditMode && id) {
         await updateDoc(doc(db, 'items', id), {
           ...itemData,
@@ -178,6 +190,53 @@ export default function ReportForm() {
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm">
           {error}
+        </div>
+      )}
+
+      {isAdmin && isEditMode && (
+        <div className="bg-gray-100 p-6 rounded-2xl mb-8 border border-gray-300">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <ShieldUser className="w-5 h-5 text-gray-700" /> เครื่องมือผู้ดูแลระบบ
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ปรับเปลี่ยนประเภทโพสต์</label>
+              <div className="flex gap-4 mt-2">
+                <label className="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="type" 
+                    value="lost" 
+                    checked={itemType === 'lost'}
+                    onChange={(e) => setItemType(e.target.value)}
+                    className="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span>แจ้งของหาย</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="type" 
+                    value="found" 
+                    checked={itemType === 'found'}
+                    onChange={(e) => setItemType(e.target.value)}
+                    className="w-4 h-4 text-green-600 focus:ring-green-500"
+                  />
+                  <span>แจ้งพบของ</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">บันทึกจากแอดมิน (Admin Note)</label>
+              <textarea 
+                rows={2}
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                className="w-full rounded-xl border-gray-300 border px-4 py-2.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none resize-none bg-white"
+                placeholder="โน้ตเพิ่มเติมสำหรับแอดมิน (จะไม่แสดงให้ผู้ใช้ทั่วไปเห็น)"
+              ></textarea>
+            </div>
+          </div>
         </div>
       )}
 
