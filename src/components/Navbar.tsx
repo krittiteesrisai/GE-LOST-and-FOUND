@@ -1,13 +1,22 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, LogOut } from 'lucide-react';
+import { auth, signOut, onAuthStateChanged } from '../lib/firebase';
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isAdmin');
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAdmin(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
     navigate('/');
   };
 

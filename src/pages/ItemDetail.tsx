@@ -162,15 +162,23 @@ export default function ItemDetail() {
             {isOwner && item.status !== 'resolved' && (
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-900 mb-2">การจัดการประกาศของคุณ</h3>
-                <p className="text-sm text-gray-500 mb-4">หาก{isLost ? 'ได้รับของคืนแล้ว' : 'ส่งคืนของให้เจ้าของแล้ว'} คุณสามารถปิดประกาศนี้ได้เลย</p>
-                <button
-                  onClick={handleResolve}
-                  disabled={updating}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {updating ? 'กำลังปิดรายการ...' : 'ปิดประกาศ (สำเร็จแล้ว)'}
-                </button>
+                <p className="text-sm text-gray-500 mb-4">หาก{isLost ? 'ได้รับของคืนแล้ว' : 'ส่งคืนของให้เจ้าของแล้ว'} คุณสามารถปิดประกาศนี้ได้เลย หรือแก้ไขข้อมูล</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleResolve}
+                    disabled={updating}
+                    className="flex-1 px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {updating ? 'กำลังปิดรายการ...' : 'ปิดประกาศ (สำเร็จแล้ว)'}
+                  </button>
+                  <Link
+                    to={`/edit/${item.id}`}
+                    className="flex-1 px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+                  >
+                    แก้ไขประกาศ
+                  </Link>
+                </div>
               </div>
             )}
           </div>

@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, storage, ref, uploadBytesResumable, getDownloadURL } from '../lib/firebase';
 import { CATEGORIES, ItemType } from '../types';
 
 export default function ReportForm() {
-  const { type } = useParams<{ type: string }>();
+  const { type, id } = useParams<{ type?: string, id?: string }>();
   const navigate = useNavigate();
+  // If we have an id, we are in edit mode
+  const isEditMode = !!id;
   const isLost = type === 'lost';
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Form State
   const [title, setTitle] = useState('');
@@ -22,6 +25,38 @@ export default function ReportForm() {
   const [contact, setContact] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [existingImageUrl, setExistingImageUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (isEditMode && id) {
+      const fetchItem = async () => {
+        setLoading(true);
+        try {
+          const docRef = doc(db, 'items', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setTitle(data.title);
+            setCategory(data.category);
+            setDescription(data.description);
+            setLocation(data.location);
+            setCurrentLocation(data.currentLocation || '');
+            setDate(data.date || '');
+            setContact(data.contact);
+            setExistingImageUrl(data.imageUrl || '');
+          } else {
+            setError('ไม่พบข้อมูลที่ต้องการแก้ไข');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchItem();
+    }
+  }, [id, isEditMode]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -40,53 +75,79 @@ export default function ReportForm() {
     }
   };
 
+  const uploadImage = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, `items/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => reject(error),
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setUploadProgress(0);
 
     try {
-      let imageUrl = '';
+      let imageUrl = existingImageUrl;
       
-      // If we had Firebase storage, we'd upload here. 
-      // For MVP, if the image is small enough, we can save the Base64 string directly to Firestore.
-      // Note: Firestore document size limit is 1MB. We might need to compress it or just use the base64 if it's small.
-      // To be safe for MVP without storage, let's just use the base64 preview but warn if too large, 
-      // or realistically in a real app use Storage. Here we'll use base64 (imagePreview) if present.
-      if (imagePreview) {
-          // In a production app, do NOT save raw base64 to Firestore if it's large.
-          // For this MVP prototype without Storage provisioned, we'll use it but slice it if it's crazy huge,
-          // or just assume standard small file test cases.
-          imageUrl = imagePreview;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
       }
 
-      const itemData = {
-        type: isLost ? 'lost' : 'found' as ItemType,
+      const itemData: any = {
         title,
         category,
         description,
         location,
-        ...( !isLost && { currentLocation } ),
         date,
         contact,
         imageUrl,
-        status: 'active',
-        createdAt: serverTimestamp()
       };
 
-      const docRef = await addDoc(collection(db, 'items'), itemData);
-      
-      // Save item ID to local storage so the creator can close the post later without needing an account
-      const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
-      myItems.push(docRef.id);
-      localStorage.setItem('myItems', JSON.stringify(myItems));
-      
-      navigate(`/item/${docRef.id}`);
+      if (!isLost) {
+        itemData.currentLocation = currentLocation;
+      }
+
+      if (isEditMode && id) {
+        await updateDoc(doc(db, 'items', id), {
+          ...itemData,
+          updatedAt: serverTimestamp()
+        });
+        navigate(`/item/${id}`);
+      } else {
+        itemData.type = isLost ? 'lost' : 'found';
+        itemData.status = 'active';
+        itemData.createdAt = serverTimestamp();
+        
+        const docRef = await addDoc(collection(db, 'items'), itemData);
+        
+        // Save item ID to local storage so the creator can close/edit the post later
+        const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
+        myItems.push(docRef.id);
+        localStorage.setItem('myItems', JSON.stringify(myItems));
+        
+        navigate(`/item/${docRef.id}`);
+      }
     } catch (err) {
       console.error(err);
-      setError('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง หรือขนาดรูปภาพอาจใหญ่เกินไป');
+      setError('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -205,8 +266,8 @@ export default function ReportForm() {
             onChange={handleImageChange}
             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
           />
-          <p className="text-xs text-gray-400 mt-2">ขนาดไฟล์ไม่เกิน 1MB เพื่อประสิทธิภาพที่ดี</p>
-          {imagePreview && (
+          <p className="text-xs text-gray-400 mt-2">ขนาดไฟล์ไม่เกิน 5MB</p>
+          {imagePreview ? (
             <div className="mt-4 relative w-32 h-32 rounded-xl overflow-hidden border border-gray-200">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
               <button 
@@ -216,6 +277,23 @@ export default function ReportForm() {
               >
                 &times;
               </button>
+            </div>
+          ) : existingImageUrl ? (
+            <div className="mt-4 relative w-32 h-32 rounded-xl overflow-hidden border border-gray-200">
+              <img src={existingImageUrl} alt="Existing" className="w-full h-full object-cover" />
+              <button 
+                type="button" 
+                onClick={() => setExistingImageUrl('')}
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                title="ลบรูปภาพเดิม"
+              >
+                &times;
+              </button>
+            </div>
+          ) : null}
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+              <div className="bg-orange-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
             </div>
           )}
         </div>
@@ -230,7 +308,7 @@ export default function ReportForm() {
                 : isLost ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
             }`}
           >
-            {loading ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูล'}
+            {loading ? (uploadProgress > 0 ? `กำลังอัปโหลด... ${Math.round(uploadProgress)}%` : 'กำลังบันทึกข้อมูล...') : isEditMode ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}
           </button>
         </div>
       </form>

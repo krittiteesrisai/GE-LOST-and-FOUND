@@ -14,6 +14,7 @@ export default function ItemsList() {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -36,11 +37,15 @@ export default function ItemsList() {
     fetchItems();
   }, [activeTab]);
 
+  // Extract unique locations for the current tab
+  const uniqueLocations = Array.from(new Set(items.map(item => item.location))).filter(Boolean);
+
   const filteredItems = items.filter(item => {
     const searchString = `${item.title} ${item.description} ${item.location} ${item.currentLocation || ''}`.toLowerCase();
     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
-    return matchesSearch && matchesCategory;
+    const matchesLocation = selectedLocation ? item.location === selectedLocation : true;
+    return matchesSearch && matchesCategory && matchesLocation;
   });
 
   return (
@@ -89,6 +94,17 @@ export default function ItemsList() {
             >
               <option value="">ทุกหมวดหมู่</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="relative md:w-64">
+            <MapPin className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <select 
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 outline-none bg-white appearance-none"
+            >
+              <option value="">ทุกสถานที่</option>
+              {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
             </select>
           </div>
         </div>

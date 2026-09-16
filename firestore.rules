@@ -2,8 +2,32 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /items/{document=**} {
-      allow read, create, update, delete: if true;
+    match /items/{item} {
+      // 1. อนุญาตให้ทุกคนอ่านได้
+      allow read: if true;
+      
+      // 2. อนุญาตให้ทุกคน create ได้ แต่ต้องเช็คฟิลด์และค่าไม่ว่างเปล่า
+      allow create: if request.resource.data.keys().hasAll(['title', 'category', 'description', 'location', 'date', 'contact', 'type'])
+                    && request.resource.data.title is string && request.resource.data.title.trim() != ''
+                    && request.resource.data.category is string && request.resource.data.category.trim() != ''
+                    && request.resource.data.description is string && request.resource.data.description.trim() != ''
+                    && request.resource.data.location is string && request.resource.data.location.trim() != ''
+                    && request.resource.data.date is string && request.resource.data.date.trim() != ''
+                    && request.resource.data.contact is string && request.resource.data.contact.trim() != ''
+                    && request.resource.data.type is string && request.resource.data.type.trim() != '';
+                    
+      // 3. อนุญาตให้ update ได้ถ้าเป็น admin (auth != null) หรือถ้าเป็นการแก้ข้อมูล/สถานะที่ยังคงโครงสร้างถูกต้อง (เพื่อให้ผู้ใช้ทั่วไปแก้ไขโพสต์ตัวเองได้ตามข้อ 1)
+      allow update: if request.auth != null || (
+                    request.resource.data.title is string && request.resource.data.title.trim() != ''
+                    && request.resource.data.category is string && request.resource.data.category.trim() != ''
+                    && request.resource.data.description is string && request.resource.data.description.trim() != ''
+                    && request.resource.data.location is string && request.resource.data.location.trim() != ''
+                    && request.resource.data.date is string && request.resource.data.date.trim() != ''
+                    && request.resource.data.contact is string && request.resource.data.contact.trim() != ''
+      );
+      
+      // 4. อนุญาตให้ delete ได้เฉพาะ admin เท่านั้น
+      allow delete: if request.auth != null;
     }
   }
 }

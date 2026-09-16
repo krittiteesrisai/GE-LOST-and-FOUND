@@ -17,6 +17,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/list" element={<ItemsList />} />
             <Route path="/report/:type" element={<ReportForm />} />
+            <Route path="/edit/:id" element={<ReportForm />} />
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
