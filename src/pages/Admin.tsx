@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db, auth, onAuthStateChanged } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { Item } from '../types';
 import { Trash2, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,14 +11,12 @@ export default function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        navigate('/login');
-      } else {
-        fetchItems();
-      }
-    });
-    return () => unsubscribe();
+    const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+    if (!isAdmin) {
+      navigate('/login');
+      return;
+    }
+    fetchItems();
   }, [navigate]);
 
   const fetchItems = async () => {

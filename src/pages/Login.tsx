@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, ShieldUser } from 'lucide-react';
-import { auth, signInWithEmailAndPassword } from '../lib/firebase';
 
 export default function Login() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,12 +14,14 @@ export default function Login() {
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    // Using environment variable or fallback for MVP
+    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
+    
+    if (password === adminPassword) {
+      sessionStorage.setItem('isAdmin', 'true');
       navigate('/admin');
-    } catch (err) {
-      console.error(err);
-      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    } else {
+      setError('รหัสผ่านไม่ถูกต้อง');
     }
   };
 
@@ -61,24 +61,17 @@ export default function Login() {
             <form onSubmit={handleAdminLogin} className="w-full space-y-4">
               {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
               <input 
-                type="email" 
-                placeholder="อีเมลแอดมิน"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-center"
-                autoFocus
-              />
-              <input 
                 type="password" 
                 placeholder="รหัสผ่าน"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 px-4 py-2.5 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-center"
+                autoFocus
               />
               <div className="flex gap-2">
                 <button 
                   type="button"
-                  onClick={() => { setShowAdminLogin(false); setError(''); setEmail(''); setPassword(''); }}
+                  onClick={() => { setShowAdminLogin(false); setError(''); setPassword(''); }}
                   className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-colors"
                 >
                   ยกเลิก
