@@ -111,6 +111,12 @@ export default function Admin() {
                       >
                         <Trash2 className="w-4 h-4 inline" /> ลบ
                       </button>
+                      <button 
+                        onClick={() => navigate(`/edit/${item.id}`)}
+                        className="text-gray-500 hover:text-gray-700 font-medium text-xs border border-gray-200 bg-white px-3 py-1.5 rounded-lg ml-2"
+                      >
+                        แก้ไข
+                      </button>
                     </td>
                   </tr>
                 ))}

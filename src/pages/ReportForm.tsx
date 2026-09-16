@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db, storage, ref, uploadBytesResumable, getDownloadURL } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { CATEGORIES, ItemType } from '../types';
 
 export default function ReportForm() {
@@ -13,7 +13,6 @@ export default function ReportForm() {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Form State
   const [title, setTitle] = useState('');
@@ -58,54 +57,71 @@ export default function ReportForm() {
     }
   }, [id, isEditMode]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      // File size validation (max 5MB)
+      // File size validation (max 5MB before compression)
       if (file.size > 5 * 1024 * 1024) {
         setError('ขนาดรูปภาพต้องไม่เกิน 5MB');
         return;
       }
       setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file);
+        setImagePreview(compressedBase64);
+      } catch (err) {
+        setError('ไม่สามารถประมวลผลรูปภาพได้');
+      }
     }
-  };
-
-  const uploadImage = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `items/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => reject(error),
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        }
-      );
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setUploadProgress(0);
 
     try {
       let imageUrl = existingImageUrl;
       
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
+      if (imagePreview) {
+        imageUrl = imagePreview;
       }
 
       const itemData: any = {
@@ -147,7 +163,6 @@ export default function ReportForm() {
       setError('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -291,11 +306,6 @@ export default function ReportForm() {
               </button>
             </div>
           ) : null}
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-orange-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-            </div>
-          )}
         </div>
 
         <div className="pt-4 border-t border-gray-100">
@@ -308,7 +318,7 @@ export default function ReportForm() {
                 : isLost ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
             }`}
           >
-            {loading ? (uploadProgress > 0 ? `กำลังอัปโหลด... ${Math.round(uploadProgress)}%` : 'กำลังบันทึกข้อมูล...') : isEditMode ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}
+            {loading ? 'กำลังบันทึกข้อมูล...' : isEditMode ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}
           </button>
         </div>
       </form>

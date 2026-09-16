@@ -18,8 +18,8 @@ export default function ItemDetail() {
       
       // Check if user is the creator (via localStorage) or an Admin
       const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
-      const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-      if (myItems.includes(id) || isAdmin) {
+      const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
+      if (myItems.includes(id) || isAdminUser) {
         setIsOwner(true);
       }
 
