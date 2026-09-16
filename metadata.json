@@ -1,0 +1,6 @@
+{
+  "name": "Campus Lost & Found",
+  "description": "ระบบแจ้งของหายและของพบภายในมหาวิทยาลัย (Campus Lost & Found Web App)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
