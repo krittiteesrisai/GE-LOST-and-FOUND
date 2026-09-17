@@ -227,13 +227,13 @@ export default function ReportForm() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">บันทึกจากแอดมิน (Admin Note)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ประกาศเพิ่มเติมจากแอดมิน (จะแสดงให้ทุกคนเห็น)</label>
               <textarea 
                 rows={2}
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 className="w-full rounded-xl border-gray-300 border px-4 py-2.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none resize-none bg-white"
-                placeholder="โน้ตเพิ่มเติมสำหรับแอดมิน (จะไม่แสดงให้ผู้ใช้ทั่วไปเห็น)"
+                placeholder="ระบุข้อความอัปเดต เช่น ติดต่อรับของได้ที่ห้องธุรการ..."
               ></textarea>
             </div>
           </div>

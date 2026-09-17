@@ -8,23 +8,29 @@ import { Search, MapPin, Calendar, Filter } from 'lucide-react';
 export default function ItemsList() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'lost' | 'found'>('lost');
+  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>('all');
   const navigate = useNavigate();
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
       try {
-        const q = query(
-          collection(db, 'items'), 
-          where('type', '==', activeTab),
-          orderBy('createdAt', 'desc')
-        );
+        let q;
+        if (activeTab === 'all') {
+          q = query(collection(db, 'items'), orderBy('createdAt', sortOrder));
+        } else {
+          q = query(
+            collection(db, 'items'), 
+            where('type', '==', activeTab),
+            orderBy('createdAt', sortOrder)
+          );
+        }
         const querySnapshot = await getDocs(q);
         const itemsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item));
         setItems(itemsData);
@@ -35,7 +41,7 @@ export default function ItemsList() {
       }
     };
     fetchItems();
-  }, [activeTab]);
+  }, [activeTab, sortOrder]);
 
   // Extract unique locations for the current tab
   const uniqueLocations = Array.from(new Set(items.map(item => item.location))).filter(Boolean);
@@ -54,10 +60,18 @@ export default function ItemsList() {
         <h1 className="text-3xl font-bold text-gray-900 mb-6">รายการทั้งหมด</h1>
         
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
+        <div className="flex border-b border-gray-200 mb-6 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`pb-4 px-6 font-medium text-lg border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === 'all' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            ทั้งหมด
+          </button>
           <button
             onClick={() => setActiveTab('lost')}
-            className={`pb-4 px-6 font-medium text-lg border-b-2 transition-colors ${
+            className={`pb-4 px-6 font-medium text-lg border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'lost' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -65,7 +79,7 @@ export default function ItemsList() {
           </button>
           <button
             onClick={() => setActiveTab('found')}
-            className={`pb-4 px-6 font-medium text-lg border-b-2 transition-colors ${
+            className={`pb-4 px-6 font-medium text-lg border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'found' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -85,7 +99,7 @@ export default function ItemsList() {
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 outline-none"
             />
           </div>
-          <div className="relative md:w-64">
+          <div className="relative md:w-56">
             <Filter className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <select 
               value={selectedCategory}
@@ -96,7 +110,7 @@ export default function ItemsList() {
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div className="relative md:w-64">
+          <div className="relative md:w-56">
             <MapPin className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <select 
               value={selectedLocation}
@@ -105,6 +119,16 @@ export default function ItemsList() {
             >
               <option value="">ทุกสถานที่</option>
               {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+            </select>
+          </div>
+          <div className="relative md:w-48">
+            <select 
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 outline-none bg-white appearance-none text-gray-700"
+            >
+              <option value="desc">ล่าสุดก่อน</option>
+              <option value="asc">เก่าสุดก่อน</option>
             </select>
           </div>
         </div>
@@ -137,12 +161,22 @@ export default function ItemsList() {
                     ไม่มีรูปภาพ
                   </div>
                 )}
-                {item.status === 'resolved' && (
+                {item.status === 'resolved' ? (
                    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
                      <span className="bg-gray-900 text-white px-4 py-1.5 rounded-full text-sm font-medium">
                        ได้รับคืนแล้ว
                      </span>
                    </div>
+                ) : (
+                  activeTab === 'all' && (
+                    <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold ${
+                      item.type === 'lost' 
+                        ? 'bg-orange-100 text-orange-700 border border-orange-200' 
+                        : 'bg-green-100 text-green-700 border border-green-200'
+                    }`}>
+                      {item.type === 'lost' ? 'ตามหาของ' : 'เก็บของได้'}
+                    </div>
+                  )
                 )}
               </div>
               <div className="p-5 flex-1 flex flex-col">
@@ -151,7 +185,7 @@ export default function ItemsList() {
                 <div className="mt-auto space-y-2 text-sm text-gray-600">
                   <p className="line-clamp-1 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    {activeTab === 'lost' ? item.location : item.currentLocation || item.location}
+                    {item.type === 'lost' ? item.location : item.currentLocation || item.location}
                   </p>
                   <p className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />

@@ -8,22 +8,45 @@ import { Item } from '../types';
 export default function Home() {
   const [recentItems, setRecentItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ lost: 0, found: 0, resolved: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchRecent = async () => {
+    const fetchRecentAndStats = async () => {
       try {
-        const q = query(collection(db, 'items'), orderBy('createdAt', 'desc'), limit(4));
-        const querySnapshot = await getDocs(q);
-        const itemsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item));
+        const qRecent = query(collection(db, 'items'), orderBy('createdAt', 'desc'), limit(4));
+        const qAll = query(collection(db, 'items'));
+        
+        const [recentSnapshot, allSnapshot] = await Promise.all([
+          getDocs(qRecent),
+          getDocs(qAll)
+        ]);
+
+        const itemsData = recentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item));
         setRecentItems(itemsData);
+
+        let lost = 0;
+        let found = 0;
+        let resolved = 0;
+
+        allSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.status === 'resolved') {
+            resolved++;
+          } else {
+            if (data.type === 'lost') lost++;
+            if (data.type === 'found') found++;
+          }
+        });
+        setStats({ lost, found, resolved });
+
       } catch (error) {
-        console.error("Error fetching recent items:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchRecent();
+    fetchRecentAndStats();
   }, []);
 
   return (
@@ -59,6 +82,37 @@ export default function Home() {
             <Search className="w-5 h-5" />
             ค้นหาข้อมูล
           </Link>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-orange-50 border border-orange-100 rounded-3xl p-8 flex items-center justify-between">
+          <div>
+            <p className="text-orange-900 font-medium mb-1">ตามหาของ</p>
+            <h2 className="text-4xl font-bold text-orange-600">{stats.lost}</h2>
+          </div>
+          <div className="bg-orange-100 p-4 rounded-full">
+            <AlertCircle className="w-8 h-8 text-orange-500" />
+          </div>
+        </div>
+        <div className="bg-green-50 border border-green-100 rounded-3xl p-8 flex items-center justify-between">
+          <div>
+            <p className="text-green-900 font-medium mb-1">เก็บของได้</p>
+            <h2 className="text-4xl font-bold text-green-600">{stats.found}</h2>
+          </div>
+          <div className="bg-green-100 p-4 rounded-full">
+            <CheckCircle2 className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+        <div className="bg-blue-50 border border-blue-100 rounded-3xl p-8 flex items-center justify-between">
+          <div>
+            <p className="text-blue-900 font-medium mb-1">ปิดรายการแล้ว</p>
+            <h2 className="text-4xl font-bold text-blue-600">{stats.resolved}</h2>
+          </div>
+          <div className="bg-blue-100 p-4 rounded-full">
+            <CheckCircle2 className="w-8 h-8 text-blue-500" />
+          </div>
         </div>
       </section>
 
