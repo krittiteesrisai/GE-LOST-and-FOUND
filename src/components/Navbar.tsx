@@ -1,27 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, LogOut, Menu, X, PlusCircle, Sparkles, Shield, Compass } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { LogOut, Menu, X, PlusCircle, Shield, Compass, User as UserIcon } from 'lucide-react';
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setIsAdmin(sessionStorage.getItem('isAdmin') === 'true');
     setMobileMenuOpen(false);
   }, [location]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isAdmin');
-    setIsAdmin(false);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
-  };
-
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
   };
 
   return (
@@ -54,7 +48,7 @@ export function Navbar() {
             <Link
               to="/list"
               className={`px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                isActive('/list')
+                location.pathname === '/list'
                   ? 'text-slate-900 bg-slate-100 font-semibold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
@@ -64,7 +58,7 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Action Zone & Admin Controls */}
+          {/* Action Zone & User / Admin Controls */}
           <div className="hidden sm:flex items-center gap-3">
             {isAdmin ? (
               <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
@@ -83,10 +77,32 @@ export function Navbar() {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
+            ) : user ? (
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                <Link
+                  to="/login"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  title={user.email || ''}
+                >
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="" className="w-4 h-4 rounded-full" />
+                  ) : (
+                    <UserIcon className="w-3.5 h-3.5 text-orange-600" />
+                  )}
+                  <span className="max-w-[100px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  title="ออกจากระบบ"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             ) : (
               <Link
                 to="/login"
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 เข้าสู่ระบบ
               </Link>
@@ -144,6 +160,7 @@ export function Navbar() {
             >
               + ลงประกาศสิ่งของ
             </Link>
+
             <div className="pt-2 border-t border-slate-200/60 mt-2 flex items-center justify-between px-3">
               {isAdmin ? (
                 <>
@@ -155,9 +172,19 @@ export function Navbar() {
                     ออกจากระบบ
                   </button>
                 </>
+              ) : user ? (
+                <>
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
+                    <UserIcon className="w-4 h-4 text-orange-600" />
+                    <span>{user.displayName || user.email?.split('@')[0]}</span>
+                  </div>
+                  <button onClick={handleLogout} className="text-xs text-rose-600 font-medium">
+                    ออกจากระบบ
+                  </button>
+                </>
               ) : (
-                <Link to="/login" className="text-sm font-medium text-slate-600">
-                  เข้าสู่ระบบแอดมิน
+                <Link to="/login" className="text-sm font-medium text-orange-600">
+                  เข้าสู่ระบบ
                 </Link>
               )}
             </div>
@@ -167,4 +194,3 @@ export function Navbar() {
     </header>
   );
 }
-

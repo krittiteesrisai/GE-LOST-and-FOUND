@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, orderBy, getDocs, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Item, CATEGORIES } from '../types';
-import { Search, MapPin, Calendar, Filter, X, ArrowUpDown, Smartphone, CreditCard, Key, Backpack, Glasses, HelpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, Calendar, Filter, X, ArrowUpDown, Smartphone, CreditCard, Key, Backpack, Glasses, HelpCircle, AlertCircle, CheckCircle2, User } from 'lucide-react';
 
 export default function ItemsList() {
   const [items, setItems] = useState<Item[]>([]);
@@ -331,13 +331,20 @@ export default function ItemsList() {
                   </p>
 
                   <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                    <div className="flex items-center gap-1.5 truncate max-w-[180px]">
+                    <div className="flex items-center gap-1.5 truncate max-w-[130px]">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="truncate">{item.type === 'lost' ? item.location : item.currentLocation || item.location}</span>
                     </div>
-                    <span className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-700 transition-colors">
-                      ดู &rarr;
-                    </span>
+                    <div className="flex items-center gap-1 text-[11px] font-medium shrink-0">
+                      <User className="w-3 h-3 text-slate-400" />
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                        item.isGuest || !item.authorName || item.authorName === 'Guest'
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-orange-50 text-orange-700'
+                      }`}>
+                        {item.isGuest || !item.authorName || item.authorName === 'Guest' ? 'Guest' : item.authorName}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

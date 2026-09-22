@@ -2,12 +2,14 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { CATEGORIES, ItemType } from '../types';
-import { ShieldUser, Upload, X, AlertCircle, CheckCircle2, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CATEGORIES } from '../types';
+import { ShieldUser, Upload, X, AlertCircle, CheckCircle2, ArrowLeft, Camera, Image as ImageIcon, User as UserIcon } from 'lucide-react';
 
 export default function ReportForm() {
   const { type, id } = useParams<{ type?: string, id?: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isEditMode = !!id;
   
   const [loading, setLoading] = useState(false);
@@ -166,6 +168,19 @@ export default function ReportForm() {
         itemData.status = 'active';
         itemData.createdAt = serverTimestamp();
         
+        // Record author identity
+        if (user) {
+          itemData.authorName = user.displayName || user.email?.split('@')[0] || 'ผู้ใช้งาน';
+          itemData.authorEmail = user.email || '';
+          itemData.authorId = user.uid;
+          itemData.isGuest = false;
+        } else {
+          itemData.authorName = 'Guest';
+          itemData.authorEmail = '';
+          itemData.authorId = 'guest';
+          itemData.isGuest = true;
+        }
+        
         const docRef = await addDoc(collection(db, 'items'), itemData);
         
         const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
@@ -234,10 +249,67 @@ export default function ReportForm() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1.5">
             {isEditMode ? 'แก้ไขข้อมูลประกาศ' : isLost ? 'ลงประกาศตามหาของหาย' : 'ลงประกาศเก็บของได้'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mb-6">
+          <p className="text-xs sm:text-sm text-slate-500 mb-5">
             กรอกรายละเอียดให้ครบถ้วน เพื่อให้ผู้อื่นสามารถตรวจสอบและส่งคืนได้ง่าย
           </p>
         </div>
+
+        {/* Identity Status Pill: User vs Guest */}
+        {!isEditMode && (
+          <div className="mb-6">
+            {user ? (
+              <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-orange-50/80 border border-orange-200/80 text-xs text-orange-950">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="" className="w-8 h-8 rounded-xl object-cover" />
+                    ) : (
+                      <UserIcon className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-slate-900">ผู้ลงประกาศ:</span>
+                      <span className="font-extrabold text-orange-600">{user.displayName || user.email?.split('@')[0]}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-200/80 text-orange-900">
+                        ยืนยันตัวตนแล้ว
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">{user.email}</p>
+                  </div>
+                </div>
+                <Link
+                  to="/login"
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                >
+                  สลับบัญชี
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+                    G
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-slate-800">ผู้ลงประกาศ:</span>
+                      <span className="font-extrabold text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded text-[11px]">Guest</span>
+                      <span className="text-[11px] text-slate-500">(ผู้ใช้ทั่วไป)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">ประกาศจะแสดงชื่อเป็น "Guest"</p>
+                  </div>
+                </div>
+                <Link
+                  to="/login"
+                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-orange-600 font-bold text-xs border border-slate-200 shadow-xs transition-colors shrink-0"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-xl mb-6 text-xs sm:text-sm">

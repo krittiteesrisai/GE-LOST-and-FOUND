@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { Item } from '../types';
-import { MapPin, Calendar, Tag, Phone, ArrowLeft, Building2, CheckCircle2, Link as LinkIcon, Search, Copy, Check, Sparkles, Smartphone, CreditCard, Key, Backpack, Glasses, HelpCircle, Edit3, ShieldAlert } from 'lucide-react';
+import { MapPin, Calendar, Tag, Phone, ArrowLeft, Building2, CheckCircle2, Link as LinkIcon, Search, Copy, Check, Sparkles, Smartphone, CreditCard, Key, Backpack, Glasses, HelpCircle, Edit3, ShieldAlert, User as UserIcon } from 'lucide-react';
 
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
+  const { user, isAdmin } = useAuth();
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
@@ -21,10 +23,6 @@ export default function ItemDetail() {
       if (!id) return;
       
       const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
-      const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
-      if (myItems.includes(id) || isAdminUser) {
-        setIsOwner(true);
-      }
 
       try {
         const docRef = doc(db, 'items', id);
@@ -33,6 +31,11 @@ export default function ItemDetail() {
           const itemData = { id: docSnap.id, ...docSnap.data() } as Item;
           setItem(itemData);
           fetchSuggestions(itemData);
+
+          const isUserAuthor = !!user && !!itemData.authorId && itemData.authorId === user.uid;
+          if (myItems.includes(id) || isAdmin || isUserAuthor) {
+            setIsOwner(true);
+          }
         }
       } catch (error) {
         console.error("Error fetching item:", error);
@@ -41,7 +44,7 @@ export default function ItemDetail() {
       }
     };
     fetchItem();
-  }, [id]);
+  }, [id, user, isAdmin]);
 
   const fetchSuggestions = async (currentItem: Item) => {
     try {
@@ -77,10 +80,36 @@ export default function ItemDetail() {
     }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+  const handleCopyLink = async () => {
+    const url = window.location.href;
+    if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: item?.title ? `${item.title} - Lost & Found` : 'ประกาศของหาย / พบของ',
+          text: item?.title ? `ดูประกาศ: ${item.title}` : undefined,
+          url: url,
+        });
+        return;
+      } catch (e) {
+        // Fallback to clipboard if share was dismissed or not allowed
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // Old browser fallback
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
   };
 
   const handleCopyContact = () => {
@@ -227,6 +256,38 @@ export default function ItemDetail() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4 tracking-tight leading-snug">
             {item.title}
           </h1>
+
+          {/* Author Badge */}
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50/90 border border-slate-200/80 mb-6">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+              item.isGuest || !item.authorName || item.authorName === 'Guest'
+                ? 'bg-slate-200 text-slate-700'
+                : 'bg-orange-600 text-white shadow-xs'
+            }`}>
+              {item.isGuest || !item.authorName || item.authorName === 'Guest' ? (
+                'G'
+              ) : (
+                <UserIcon className="w-4 h-4" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-500">ผู้ลงประกาศ:</span>
+                <span className="text-xs font-bold text-slate-900 truncate">
+                  {item.authorName || 'Guest'}
+                </span>
+                {item.isGuest || !item.authorName || item.authorName === 'Guest' ? (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 text-slate-600">
+                    Guest (ผู้ใช้ทั่วไป)
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    ✓ ผู้ใช้งานยืนยันตัวตน
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Description */}
           <div className="mb-6">

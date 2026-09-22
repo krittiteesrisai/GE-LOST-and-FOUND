@@ -252,9 +252,19 @@ export default function Admin() {
                       {item.category}
                     </td>
 
-                    {/* Contact */}
-                    <td className="px-4 py-3.5 text-xs text-slate-700 font-mono">
-                      {item.contact}
+                    {/* Contact & Author */}
+                    <td className="px-4 py-3.5 text-xs text-slate-700">
+                      <div className="font-mono font-medium text-slate-800">{item.contact}</div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                        <span>โดย:</span>
+                        <span className={`font-semibold ${
+                          item.isGuest || !item.authorName || item.authorName === 'Guest'
+                            ? 'text-slate-500'
+                            : 'text-orange-600'
+                        }`}>
+                          {item.authorName || 'Guest'}
+                        </span>
+                      </div>
                     </td>
 
                     {/* Status */}

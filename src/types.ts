@@ -27,4 +27,8 @@ export interface Item {
   status: ItemStatus;
   adminNote?: string; // For admins to leave a note
   createdAt?: any;
+  authorName?: string; // e.g. "Guest" or "กฤตติพงศ์"
+  authorEmail?: string;
+  authorId?: string; // uid if logged in, or 'guest'
+  isGuest?: boolean;
 }
