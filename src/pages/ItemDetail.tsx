@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Item } from '../types';
-import { MapPin, Calendar, Tag, Phone, ArrowLeft, Building2, CheckCircle2, Link as LinkIcon, Search } from 'lucide-react';
+import { MapPin, Calendar, Tag, Phone, ArrowLeft, Building2, CheckCircle2, Link as LinkIcon, Search, Copy, Check, Sparkles, Smartphone, CreditCard, Key, Backpack, Glasses, HelpCircle, Edit3, ShieldAlert } from 'lucide-react';
 
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,7 +11,8 @@ export default function ItemDetail() {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedContact, setCopiedContact] = useState(false);
   const [suggestions, setSuggestions] = useState<Item[]>([]);
   const navigate = useNavigate();
 
@@ -19,7 +20,6 @@ export default function ItemDetail() {
     const fetchItem = async () => {
       if (!id) return;
       
-      // Check if user is the creator (via localStorage) or an Admin
       const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
       const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
       if (myItems.includes(id) || isAdminUser) {
@@ -56,9 +56,8 @@ export default function ItemDetail() {
       const querySnapshot = await getDocs(q);
       const items = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as Item))
-        .filter(i => i.id !== currentItem.id); // exclude self just in case
+        .filter(i => i.id !== currentItem.id);
 
-      // Simple keyword matching
       const getWords = (text: string) => text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
       const targetWords = new Set([...getWords(currentItem.title), ...getWords(currentItem.description)]);
 
@@ -80,8 +79,16 @@ export default function ItemDetail() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleCopyContact = () => {
+    if (item?.contact) {
+      navigator.clipboard.writeText(item.contact);
+      setCopiedContact(true);
+      setTimeout(() => setCopiedContact(false), 2000);
+    }
   };
 
   const handleResolve = async () => {
@@ -97,150 +104,259 @@ export default function ItemDetail() {
     }
   };
 
+  const getCategoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'อุปกรณ์อิเล็กทรอนิกส์':
+        return <Smartphone className="w-10 h-10 text-blue-500" />;
+      case 'เอกสาร/บัตร':
+        return <CreditCard className="w-10 h-10 text-amber-500" />;
+      case 'กุญแจ':
+        return <Key className="w-10 h-10 text-emerald-500" />;
+      case 'กระเป๋า':
+        return <Backpack className="w-10 h-10 text-indigo-500" />;
+      case 'แว่นตา':
+        return <Glasses className="w-10 h-10 text-purple-500" />;
+      default:
+        return <HelpCircle className="w-10 h-10 text-slate-400" />;
+    }
+  };
+
   if (loading) {
-    return <div className="text-center py-20 animate-pulse text-gray-500">กำลังโหลดข้อมูล...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-orange-500 rounded-full animate-spin" />
+        <span className="text-sm font-medium">กำลังโหลดข้อมูลสิ่งของ...</span>
+      </div>
+    );
   }
 
   if (!item) {
     return (
-      <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">ไม่พบข้อมูล</h2>
-        <Link to="/list" className="text-orange-600 hover:underline">กลับไปหน้ารายการ</Link>
+      <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 mb-2">ไม่พบข้อมูลประกาศนี้</h2>
+        <p className="text-sm text-slate-500 mb-6">ประกาศอาจถูกลบหรือไม่มีอยู่ในระบบ</p>
+        <Link to="/list" className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800">
+          กลับไปหน้ารวมรายการ
+        </Link>
       </div>
     );
   }
 
   const isLost = item.type === 'lost';
+  const isResolved = item.status === 'resolved';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Link to="/list" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium">
-        <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
-      </Link>
+      {/* Top Breadcrumb & Share Actions */}
+      <div className="flex items-center justify-between">
+        <Link 
+          to="/list" 
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> 
+          <span>กลับไปรายการทั้งหมด</span>
+        </Link>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
-        {/* Image Section */}
-        <div className="md:w-1/2 bg-gray-50 min-h-[300px] flex items-center justify-center border-r border-gray-100 relative">
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover max-h-[500px]" />
+        <button 
+          onClick={handleCopyLink}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-xs hover:bg-slate-50 transition-colors"
+        >
+          {copiedLink ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-emerald-600 font-semibold">คัดลอกลิงก์แล้ว!</span>
+            </>
           ) : (
-             <div className="text-gray-400">ไม่มีรูปภาพประกอบ</div>
+            <>
+              <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
+              <span>แชร์ประกาศ</span>
+            </>
           )}
-          {item.status === 'resolved' && (
-             <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center">
-               <span className="bg-gray-900 text-white px-6 py-2 rounded-full text-lg font-medium shadow-xl">
-                 รายการนี้ได้รับคืนแล้ว
-               </span>
-             </div>
+        </button>
+      </div>
+
+      {/* Main Showcase Card */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col md:flex-row">
+        {/* Visual Showcase (Left/Top) */}
+        <div className="md:w-1/2 bg-slate-50 min-h-[320px] md:min-h-[460px] flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-200/80 relative overflow-hidden">
+          {item.imageUrl ? (
+            <img 
+              src={item.imageUrl} 
+              alt={item.title} 
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover max-h-[500px]" 
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <div className="p-4 rounded-3xl bg-white shadow-sm mb-3">
+                {getCategoryIcon(item.category)}
+              </div>
+              <p className="text-xs font-medium text-slate-400">ผู้แจ้งไม่ได้แนบรูปภาพประกอบ</p>
+            </div>
+          )}
+
+          {/* Overlay Status Pill */}
+          {isResolved && (
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 text-center">
+              <div className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="font-bold text-sm">รายการนี้ปิดแล้ว (ได้รับคืนแล้ว)</span>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Content Section */}
-        <div className="md:w-1/2 p-8 md:p-10 flex flex-col">
-          <div className={`self-start px-4 py-1.5 rounded-full text-sm font-semibold mb-4 ${
-            isLost ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-          }`}>
-            {isLost ? 'ประกาศตามหาของ' : 'ประกาศเก็บของได้'}
+        {/* Content Section (Right) */}
+        <div className="md:w-1/2 p-6 sm:p-8 flex flex-col">
+          {/* Status Badge & Category */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              isLost 
+                ? 'bg-orange-50 text-orange-700 border border-orange-200' 
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isLost ? 'bg-orange-500' : 'bg-emerald-600'} animate-pulse`} />
+              {isLost ? 'ประกาศตามหาของ' : 'ประกาศพบของ'}
+            </span>
+
+            <span className="text-xs font-medium text-slate-500">
+              หมวดหมู่: <strong className="text-slate-800">{item.category}</strong>
+            </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{item.title}</h1>
-          <div className="flex items-center gap-2 text-gray-500 mb-8">
-            <Tag className="w-4 h-4" />
-            <span className="text-sm font-medium">{item.category}</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4 tracking-tight leading-snug">
+            {item.title}
+          </h1>
+
+          {/* Description */}
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+              ลักษณะและรายละเอียด
+            </h3>
+            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+              {item.description}
+            </p>
           </div>
 
-          <div className="space-y-6 flex-1">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">รายละเอียด</h3>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{item.description}</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-2xl">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-orange-500" />
-                  {isLost ? 'สถานที่คาดว่าหาย' : 'สถานที่พบ'}
-                </h3>
-                <p className="text-gray-600 text-sm">{item.location}</p>
+          {/* Key Facts / Metadata Grid */}
+          <div className="space-y-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+                  <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                  <span>{isLost ? 'สถานที่คาดว่าหาย' : 'สถานที่พบ'}</span>
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-slate-800 break-words">
+                  {item.location}
+                </div>
               </div>
-              
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-orange-500" />
-                  {isLost ? 'วันที่คาดว่าหาย' : 'วันที่พบ'}
-                </h3>
-                <p className="text-gray-600 text-sm">
+
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                  <span>{isLost ? 'วันที่คาดว่าหาย' : 'วันที่พบ'}</span>
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-slate-800">
                   {new Date(item.date).toLocaleString('th-TH', { 
-                    dateStyle: 'long', 
+                    dateStyle: 'medium', 
                     timeStyle: 'short' 
                   })}
-                </p>
-              </div>
-
-              {!isLost && item.currentLocation && (
-                <div className="sm:col-span-2">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-orange-500" />
-                    สถานที่ฝากของปัจจุบัน
-                  </h3>
-                  <p className="text-gray-600 text-sm font-medium">{item.currentLocation}</p>
                 </div>
-              )}
+              </div>
             </div>
 
+            {!isLost && item.currentLocation && (
+              <div className="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/60">
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 mb-1">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>สถานที่นำของไปฝากไว้ในปัจจุบัน</span>
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-emerald-950">
+                  {item.currentLocation}
+                </div>
+              </div>
+            )}
+
+            {/* Admin Note if provided */}
             {item.adminNote && (
-              <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                <h3 className="text-sm font-semibold text-yellow-800 mb-1 flex items-center gap-2">
-                  <Tag className="w-4 h-4" /> ประกาศเพิ่มเติมจากแอดมิน
-                </h3>
-                <p className="text-sm text-yellow-900">{item.adminNote}</p>
+              <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200/80">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 mb-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>ข้อความกำกับจากเจ้าหน้าที่ / ผู้ดูแลระบบ</span>
+                </div>
+                <div className="text-xs text-amber-900 leading-relaxed">
+                  {item.adminNote}
+                </div>
               </div>
             )}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col gap-6">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-600" />
-                  ช่องทางติดต่อ {isLost ? 'เจ้าของ' : 'ผู้พบ'}
-                </h3>
-                <button 
-                  onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          {/* Contact Box */}
+          <div className="mt-auto pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                ช่องทางติดต่อ{isLost ? 'เจ้าของที่ตามหา' : 'ผู้ที่เก็บได้'}
+              </span>
+              {!isResolved && (
+                <button
+                  onClick={handleCopyContact}
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1"
                 >
-                  <LinkIcon className="w-3.5 h-3.5" />
-                  {copied ? <span className="text-green-600">คัดลอกลิงก์แล้ว</span> : 'คัดลอกลิงก์'}
+                  {copiedContact ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      <span className="text-emerald-600">คัดลอกแล้ว</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>คัดลอก</span>
+                    </>
+                  )}
                 </button>
-              </div>
-              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                {item.status === 'resolved' ? (
-                  <p className="text-gray-500 text-center text-sm italic">ซ่อนข้อมูลการติดต่อเนื่องจากรายการถูกปิดแล้ว</p>
-                ) : (
-                  <p className="text-green-800 font-medium">{item.contact}</p>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* User resolve button (if owner or admin) */}
-            {isOwner && item.status !== 'resolved' && (
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">การจัดการประกาศของคุณ</h3>
-                <p className="text-sm text-gray-500 mb-4">หาก{isLost ? 'ได้รับของคืนแล้ว' : 'ส่งคืนของให้เจ้าของแล้ว'} คุณสามารถปิดประกาศนี้ได้เลย หรือแก้ไขข้อมูล</p>
-                <div className="flex flex-col sm:flex-row gap-3">
+            {isResolved ? (
+              <div className="bg-slate-100 p-3 rounded-xl text-center text-xs text-slate-500 font-medium italic">
+                ซ่อนข้อมูลการติดต่อแล้วเนื่องจากรายการนี้ดำเนินการปิดสำเร็จแล้ว
+              </div>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl flex items-center justify-between gap-3">
+                <span className="text-sm font-bold text-emerald-900 select-all font-mono">
+                  {item.contact}
+                </span>
+                <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-md font-semibold">
+                  ติดต่อได้ทันที
+                </span>
+              </div>
+            )}
+
+            {/* Owner or Admin Controls */}
+            {isOwner && !isResolved && (
+              <div className="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <div className="text-xs font-bold text-slate-800 mb-1">
+                  เมนูจัดการประกาศ (สำหรับคุณหรือเจ้าหน้าที่)
+                </div>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  เมื่อได้รับของคืนแล้ว กรุณากดปิดประกาศเพื่อไม่ให้มีผู้ติดต่อซ้ำ
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={handleResolve}
                     disabled={updating}
-                    className="flex-1 px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    {updating ? 'กำลังปิดรายการ...' : 'ปิดประกาศ (สำเร็จแล้ว)'}
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{updating ? 'กำลังอัปเดต...' : 'ปิดประกาศ (ส่งมอบคืนแล้ว)'}</span>
                   </button>
                   <Link
                     to={`/edit/${item.id}`}
-                    className="flex-1 px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    แก้ไขประกาศ
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>แก้ไขข้อมูล</span>
                   </Link>
                 </div>
               </div>
@@ -249,43 +365,49 @@ export default function ItemDetail() {
         </div>
       </div>
 
-      {/* Suggestions Section */}
+      {/* Matching Suggestions Section */}
       {suggestions.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Search className="w-5 h-5 text-gray-500" />
-            รายการที่อาจตรงกับที่คุณตามหา
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <h2 className="text-base font-bold text-slate-900">
+              รายการที่ใกล้เคียงและอาจเกี่ยวข้องกับชิ้นนี้
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {suggestions.map(s => (
               <div 
                 key={s.id} 
                 onClick={() => navigate(`/item/${s.id}`)}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow group flex flex-col"
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:border-slate-300 transition-all group flex flex-col"
               >
-                <div className="h-40 bg-gray-100 relative overflow-hidden">
+                <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
                   {s.imageUrl ? (
-                    <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img 
+                      src={s.imageUrl} 
+                      alt={s.title} 
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50 text-sm">
-                      ไม่มีรูปภาพ
+                    <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-400">
+                      {getCategoryIcon(s.category)}
                     </div>
                   )}
-                  <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold ${
-                    s.type === 'lost' 
-                      ? 'bg-orange-100 text-orange-700 border border-orange-200' 
-                      : 'bg-green-100 text-green-700 border border-green-200'
+                  <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${
+                    s.type === 'lost' ? 'bg-orange-500' : 'bg-emerald-600'
                   }`}>
-                    {s.type === 'lost' ? 'ตามหาของ' : 'เก็บของได้'}
-                  </div>
+                    {s.type === 'lost' ? 'ตามหา' : 'เก็บได้'}
+                  </span>
                 </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-1">{s.title}</h3>
-                  <div className="mt-auto text-sm text-gray-600">
-                    <p className="line-clamp-1 flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      {s.type === 'lost' ? s.location : s.currentLocation || s.location}
-                    </p>
+                <div className="p-3.5 flex-1 flex flex-col">
+                  <h4 className="font-bold text-slate-900 text-xs line-clamp-1 mb-1 group-hover:text-orange-600 transition-colors">
+                    {s.title}
+                  </h4>
+                  <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-auto">
+                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="truncate">{s.type === 'lost' ? s.location : s.currentLocation || s.location}</span>
                   </div>
                 </div>
               </div>
@@ -296,3 +418,4 @@ export default function ItemDetail() {
     </div>
   );
 }
+
