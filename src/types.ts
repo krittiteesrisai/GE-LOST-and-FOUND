@@ -48,3 +48,41 @@ export interface ChatMessage {
   createdAt: any;
 }
 
+export interface MentionedItemSummary {
+  id: string;
+  title: string;
+  type: ItemType;
+  category: string;
+  imageUrl?: string;
+  status: ItemStatus;
+  location: string;
+  date: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  chatId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'user' | 'admin';
+  senderAvatar?: string;
+  text: string;
+  mentionedItem?: MentionedItemSummary | null;
+  createdAt: any;
+}
+
+export interface SupportChat {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  isGuest: boolean;
+  lastMessage: string;
+  lastMessageAt: any;
+  unreadByAdmin?: boolean;
+  unreadByUser?: boolean;
+  status?: 'open' | 'closed';
+  createdAt: any;
+}
+
+

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMyItems } from '../hooks/useMyItems';
-import { LogOut, Menu, X, PlusCircle, Shield, Compass, Package } from 'lucide-react';
+import { LogOut, Menu, X, PlusCircle, Shield, Compass, Package, Headphones } from 'lucide-react';
 
 export function Navbar() {
   const location = useLocation();

@@ -8,7 +8,8 @@ import ItemDetail from './pages/ItemDetail';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import MyPosts from './pages/MyPosts';
-import { HeartHandshake, ShieldCheck, Sparkles, HelpCircle } from 'lucide-react';
+import Help from './pages/Help';
+import { HeartHandshake, ShieldCheck, Sparkles, HelpCircle, MessageSquare } from 'lucide-react';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
               <Route path="/report/:type" element={<ReportForm />} />
               <Route path="/edit/:id" element={<ReportForm />} />
               <Route path="/item/:id" element={<ItemDetail />} />
+              <Route path="/help" element={<Help />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/login" element={<Login />} />
             </Routes>
@@ -64,6 +66,11 @@ export default function App() {
                 <div>
                   <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">ความช่วยเหลือ</h4>
                   <ul className="space-y-2">
+                    <li>
+                      <Link to="/help" className="hover:text-teal-600 transition-colors">
+                        ติดต่อเจ้าหน้าที่ / ศูนย์ช่วยเหลือ
+                      </Link>
+                    </li>
                     <li><Link to="/login" className="hover:text-teal-600 transition-colors">เข้าสู่ระบบผู้ใช้งาน</Link></li>
                     <li><Link to="/login" className="hover:text-teal-600 transition-colors">เจ้าหน้าที่ดูแลระบบ (Admin)</Link></li>
                     <li className="text-slate-400 text-[11px]">ติดต่อจุดรับฝากของ: อาคาร 1 ชั้น 1</li>

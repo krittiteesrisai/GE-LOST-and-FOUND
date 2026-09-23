@@ -35,5 +35,14 @@ service cloud.firestore {
         allow update, delete: if true;
       }
     }
+
+    // 6. Support Chats ติดต่อ Admin โดยตรงพร้อมเมนชั่นประกาศ
+    match /support_chats/{chatId} {
+      allow read, write: if true;
+
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
   }
 }

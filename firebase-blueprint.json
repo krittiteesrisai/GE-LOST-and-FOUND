@@ -38,6 +38,38 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp created" }
       },
       "required": ["text", "authorName"]
+    },
+    "SupportChat": {
+      "title": "SupportChat",
+      "description": "Support chat thread between user and admin",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "isGuest": { "type": "boolean" },
+        "lastMessage": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "unreadByAdmin": { "type": "boolean" },
+        "unreadByUser": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["open", "closed"] }
+      },
+      "required": ["userId", "userName", "lastMessage"]
+    },
+    "SupportMessage": {
+      "title": "SupportMessage",
+      "description": "Message in support chat with admin, supports item mention",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string", "enum": ["user", "admin"] },
+        "text": { "type": "string" },
+        "mentionedItem": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "senderId", "senderName", "senderRole", "text"]
     }
   },
   "firestore": {
@@ -48,6 +80,14 @@
     "/items/{itemId}/messages/{messageId}": {
       "schema": "Message",
       "description": "Real-time chat messages and lead discussions for an item"
+    },
+    "/support_chats/{chatId}": {
+      "schema": "SupportChat",
+      "description": "Support chat threads between students/guests and admin"
+    },
+    "/support_chats/{chatId}/messages/{messageId}": {
+      "schema": "SupportMessage",
+      "description": "Messages inside admin support chat with item mention support"
     }
   }
 }

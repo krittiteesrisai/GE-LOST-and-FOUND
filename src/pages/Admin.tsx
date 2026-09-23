@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Item } from '../types';
+import { Item, SupportChat } from '../types';
+import { AdminSupportChatBox } from '../components/AdminSupportChatBox';
 import { 
   Trash2, 
   CheckCircle2, 
@@ -17,7 +18,11 @@ import {
   Users, 
   Mail, 
   Package, 
-  ExternalLink
+  ExternalLink,
+  MessageSquare,
+  Headphones,
+  User as UserIcon,
+  ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,9 +38,12 @@ interface RegisteredUser {
 
 export default function Admin() {
   const { deleteUserRecord } = useAuth();
-  const [activeTab, setActiveTab] = useState<'items' | 'users'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'users' | 'support'>('items');
   const [items, setItems] = useState<Item[]>([]);
   const [users, setUsers] = useState<RegisteredUser[]>([]);
+  const [supportChats, setSupportChats] = useState<SupportChat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<SupportChat | null>(null);
+  const [supportSearchQuery, setSupportSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -54,6 +62,18 @@ export default function Admin() {
       return;
     }
     fetchData();
+
+    // Listen to support chats in real-time
+    const qSupport = query(collection(db, 'support_chats'), orderBy('lastMessageAt', 'desc'));
+    const unsubscribeSupport = onSnapshot(qSupport, (snapshot) => {
+      const chats: SupportChat[] = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      } as SupportChat));
+      setSupportChats(chats);
+    });
+
+    return () => unsubscribeSupport();
   }, [navigate]);
 
   const fetchData = async () => {
@@ -189,6 +209,18 @@ export default function Admin() {
     return `${user.email} ${user.displayName} ${user.uid}`.toLowerCase().includes(userSearchQuery.toLowerCase());
   });
 
+  const filteredSupportChats = supportChats.filter(chat => {
+    if (!supportSearchQuery.trim()) return true;
+    const q = supportSearchQuery.toLowerCase();
+    return (
+      (chat.userName && chat.userName.toLowerCase().includes(q)) ||
+      (chat.userEmail && chat.userEmail.toLowerCase().includes(q)) ||
+      (chat.lastMessage && chat.lastMessage.toLowerCase().includes(q))
+    );
+  });
+
+  const unreadSupportCount = supportChats.filter(c => c.unreadByAdmin).length;
+
   const totalCount = items.length;
   const activeCount = items.filter(i => i.status !== 'resolved').length;
   const resolvedCount = items.filter(i => i.status === 'resolved').length;
@@ -244,6 +276,21 @@ export default function Admin() {
         >
           <Users className="w-3.5 h-3.5 text-teal-600" />
           <span>บัญชีผู้ใช้ ({users.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('support')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all relative ${
+            activeTab === 'support' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+          <span>แชตติดต่อผู้ใช้ ({supportChats.length})</span>
+          {unreadSupportCount > 0 && (
+            <span className="px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-bold rounded-full animate-pulse">
+              {unreadSupportCount} ใหม่
+            </span>
+          )}
         </button>
       </div>
 
@@ -423,7 +470,7 @@ export default function Admin() {
             )}
           </div>
         </>
-      ) : (
+      ) : activeTab === 'users' ? (
         /* USERS DIRECTORY */
         <div className="space-y-3">
           {/* User Search Bar */}
@@ -530,6 +577,135 @@ export default function Admin() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* SUPPORT CHATS DIRECTORY */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left: Chat Threads List (5 cols) */}
+          <div className="lg:col-span-5 space-y-3">
+            <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-2">
+              <Search className="w-4 h-4 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อผู้ใช้, อีเมล, หรือข้อความ..."
+                value={supportSearchQuery}
+                onChange={(e) => setSupportSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
+              />
+              {supportSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSupportSearchQuery('')}
+                  className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                >
+                  ล้าง
+                </button>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+              {filteredSupportChats.length === 0 ? (
+                <div className="p-8 text-center space-y-2">
+                  <MessageSquare className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700">ยังไม่มีข้อความติดต่อจากผู้ใช้</p>
+                  <p className="text-[11px] text-slate-400">
+                    เมื่อนักศึกษาหรือผู้ใช้งานส่งข้อความผ่านหน้าความช่วยเหลือ รายการจะปรากฏที่นี่แบบ Real-time
+                  </p>
+                </div>
+              ) : (
+                filteredSupportChats.map((chat) => {
+                  const isSelected = selectedChat?.id === chat.id;
+                  const isUnread = !!chat.unreadByAdmin;
+
+                  return (
+                    <div
+                      key={chat.id}
+                      onClick={() => setSelectedChat(chat)}
+                      className={`p-3.5 flex items-start justify-between gap-3 cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-teal-50/80 border-l-4 border-l-teal-600' 
+                          : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          chat.isGuest 
+                            ? 'bg-slate-100 text-slate-600' 
+                            : 'bg-teal-100 text-teal-700'
+                        }`}>
+                          <UserIcon className="w-4 h-4" />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">
+                              {chat.userName}
+                            </h4>
+                            {isUnread && (
+                              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                            <span className="truncate">
+                              {chat.userEmail || (chat.isGuest ? 'Guest User' : 'นักศึกษา')}
+                            </span>
+                            {chat.lastMessageAt && (
+                              <>
+                                <span>·</span>
+                                <span className="shrink-0">
+                                  {chat.lastMessageAt?.toDate 
+                                    ? chat.lastMessageAt.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+                                    : ''}
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] text-slate-600 truncate mt-1">
+                            {chat.lastMessage || 'ไม่มีข้อความล่าสุด'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
+                        isSelected ? 'text-teal-600 translate-x-0.5' : 'text-slate-300'
+                      }`} />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Right: Active Chat View (7 cols) */}
+          <div className="lg:col-span-7">
+            {selectedChat ? (
+              <AdminSupportChatBox
+                key={selectedChat.id}
+                chatId={selectedChat.id}
+                targetUserName={selectedChat.userName}
+                targetUserEmail={selectedChat.userEmail}
+                isGuestUser={selectedChat.isGuest}
+                currentRole="admin"
+                onClose={() => setSelectedChat(null)}
+              />
+            ) : (
+              <div className="h-[580px] bg-white rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-8 space-y-3">
+                <div className="w-14 h-14 rounded-3xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl">
+                  💬
+                </div>
+                <div className="max-w-sm space-y-1">
+                  <h4 className="text-sm font-bold text-slate-800">
+                    เลือกรายการแชตเพื่อเริ่มการสนทนา
+                  </h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    คลิกเลือกห้องแชตของนักศึกษาหรือผู้ใช้งานจากรายการด้านซ้าย เพื่อดูข้อความ ดูประกาศที่ผู้ใช้เมนชั่นเข้ามา และตอบกลับแบบ Real-time
+                  </p>
+                </div>
               </div>
             )}
           </div>

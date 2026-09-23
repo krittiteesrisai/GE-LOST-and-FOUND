@@ -32,7 +32,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  X
+  X,
+  Headphones
 } from 'lucide-react';
 
 export default function ItemDetail() {
@@ -473,6 +474,17 @@ export default function ItemDetail() {
                 <span className="mt-0.5 block">{item.adminNote}</span>
               </div>
             )}
+
+            {/* Help / Contact Admin with this Item */}
+            <div className="pt-1">
+              <Link
+                to={`/help?itemId=${item.id}`}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-teal-50 hover:bg-teal-100/90 text-teal-800 font-bold text-xs border border-teal-200 transition-all shadow-2xs group cursor-pointer"
+              >
+                <Headphones className="w-4 h-4 text-teal-600 group-hover:scale-110 transition-transform" />
+                <span>ติดต่อเจ้าหน้าที่เกี่ยวกับประกาศนี้</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
