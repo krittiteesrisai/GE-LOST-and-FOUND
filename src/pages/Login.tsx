@@ -12,21 +12,26 @@ import {
   LogOut,
   ShieldCheck,
   Eye, 
-  EyeOff
+  EyeOff,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function Login() {
   const { 
     user, 
+    effectiveUser,
     isAdmin, 
     loginWithGoogle, 
     loginWithEmail, 
     registerWithEmail, 
     loginAsAdmin, 
-    logout 
+    logout,
+    deleteCurrentAccount
   } = useAuth();
   
-  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'admin'>('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -35,6 +40,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const navigate = useNavigate();
 
   // Handle Google Login
@@ -55,9 +62,9 @@ export default function Login() {
         return;
       }
       if (err?.code === 'auth/popup-blocked') {
-        setError('เบราว์เซอร์บล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตการเปิดป๊อปอัปเพื่อเข้าสู่ระบบ');
+        setError('เบราว์เซอร์บล็อกป๊อปอัป กรุณาอนุญาตเพื่อเข้าสู่ระบบ');
       } else {
-        setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google กรุณาลองใหม่อีกครั้ง');
+        setError('เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่');
       }
     } finally {
       setLoading(false);
@@ -75,15 +82,19 @@ export default function Login() {
     setLoading(true);
     try {
       await loginWithEmail(email, password);
-      navigate('/');
+      setSuccessMsg('เข้าสู่ระบบสำเร็จ');
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
     } catch (err: any) {
-      console.error(err);
-      if (err?.code === 'auth/user-not-found' || err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
+      if (err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
         setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       } else if (err?.code === 'auth/invalid-email') {
         setError('รูปแบบอีเมลไม่ถูกต้อง');
+      } else if (err?.code === 'auth/weak-password') {
+        setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       } else {
-        setError('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        setError(err?.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่');
       }
     } finally {
       setLoading(false);
@@ -94,7 +105,7 @@ export default function Login() {
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     if (!displayName.trim()) {
-      setError('กรุณาระบุชื่อผู้ใช้งานที่จะแสดงในประกาศ');
+      setError('กรุณาระบุชื่อผู้ใช้งาน');
       return;
     }
     if (!email || !password) {
@@ -102,7 +113,7 @@ export default function Login() {
       return;
     }
     if (password.length < 6) {
-      setError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       return;
     }
 
@@ -110,20 +121,17 @@ export default function Login() {
     setLoading(true);
     try {
       await registerWithEmail(email, password, displayName.trim());
-      setSuccessMsg('สมัครสมาชิกสำเร็จแล้ว!');
+      setSuccessMsg('ลงทะเบียนสำเร็จ');
       setTimeout(() => {
         navigate('/');
-      }, 1000);
+      }, 600);
     } catch (err: any) {
-      console.error(err);
       if (err?.code === 'auth/email-already-in-use') {
-        setError('อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบแทน');
+        setError('อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบ');
       } else if (err?.code === 'auth/invalid-email') {
         setError('รูปแบบอีเมลไม่ถูกต้อง');
-      } else if (err?.code === 'auth/weak-password') {
-        setError('รหัสผ่านคาดเดาง่ายเกินไป');
       } else {
-        setError('เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่');
+        setError(err?.message || 'ลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
       }
     } finally {
       setLoading(false);
@@ -138,111 +146,134 @@ export default function Login() {
     if (success) {
       navigate('/admin');
     } else {
-      setError('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง');
+      setError('รหัสผ่านแอดมินไม่ถูกต้อง');
     }
   };
 
-  // Logged In Status Screen
-  if (user || isAdmin) {
+  // Handle Delete Account
+  const handleDeleteMyAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      await deleteCurrentAccount();
+      setShowDeleteModal(false);
+      navigate('/');
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการลบบัญชี');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  // Current active user representation
+  const currentUser = effectiveUser || (user ? {
+    displayName: user.displayName || user.email?.split('@')[0],
+    email: user.email,
+  } : null);
+
+  // Logged In View
+  if (currentUser || isAdmin) {
     return (
       <div className="max-w-md mx-auto py-12">
-        <div className="bg-white p-8 rounded-3xl border border-teal-100 text-center space-y-4 shadow-sm">
+        <div className="bg-white p-7 rounded-3xl border border-slate-200/90 text-center space-y-4 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-100">
-            <User className="w-7 h-7" />
+            {isAdmin ? <ShieldCheck className="w-7 h-7" /> : <User className="w-7 h-7" />}
           </div>
           <div>
-            <span className="text-xs font-bold text-teal-700">เข้าสู่ระบบแล้ว</span>
-            <h2 className="text-xl font-bold text-slate-900 mt-1">
-              {isAdmin ? 'บัญชีผู้ดูแลระบบ (Admin)' : user?.displayName || user?.email}
+            <h2 className="text-lg font-bold text-slate-900">
+              {isAdmin ? 'ผู้ดูแลระบบ (Admin)' : currentUser?.displayName || 'ผู้ใช้งาน'}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              {isAdmin ? 'มีสิทธิ์จัดการและแก้ไขทุกประกาศในระบบ' : user?.email}
+            <p className="text-xs text-slate-500 mt-0.5">
+              {isAdmin ? 'สิทธิ์จัดการระบบ' : currentUser?.email}
             </p>
           </div>
 
           <div className="pt-2 flex flex-col gap-2">
             <Link
               to="/report/lost"
-              className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-2xl text-xs sm:text-sm shadow-sm transition-colors"
+              className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm transition-colors"
             >
-              ไปหน้าลงประกาศ
+              ลงประกาศสิ่งของ
             </Link>
+            
             <button
               onClick={async () => {
                 await logout();
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               ออกจากระบบ
             </button>
+
+            {!isAdmin && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-rose-500 hover:text-rose-700 hover:underline pt-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                ลบบัญชีผู้ใช้ของฉัน
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 text-center">
+              <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-3 mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1">ยืนยันการลบบัญชี</h3>
+              <p className="text-slate-500 text-xs mb-5">
+                บัญชีและข้อมูลของคุณจะถูกลบออกจากระบบ
+              </p>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deletingAccount}
+                  className="flex-1 py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-200"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  onClick={handleDeleteMyAccount}
+                  disabled={deletingAccount}
+                  className="flex-1 py-2 bg-rose-600 text-white font-semibold text-xs rounded-xl hover:bg-rose-700 shadow-sm"
+                >
+                  {deletingAccount ? 'กำลังลบ...' : 'ยืนยันลบบัญชี'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 sm:py-10">
-      <div className="text-center mb-8">
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 mb-3 shadow-xs">
-          <Lock className="w-3.5 h-3.5 text-teal-600" /> ระบบบัญชีผู้ใช้งาน & สิทธิ์การดูแล
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          เข้าสู่ระบบ หรือเลือกใช้งานแบบ Guest
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-lg mx-auto">
-          เข้าสู่ระบบเพื่อให้ประกาศระบุชื่อของคุณ หรือใช้งานแบบ Guest ได้ทันทีโดยไม่ต้องเข้าสู่ระบบ
-        </p>
-      </div>
-
+    <div className="max-w-3xl mx-auto py-8">
       <div className="grid md:grid-cols-12 gap-6 items-start">
-        {/* Main User Auth Box (7 cols) */}
-        <div className="md:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-teal-100/90 shadow-xs">
-          {/* Tabs: Sign In vs Register */}
-          <div className="flex bg-teal-50/70 p-1.5 rounded-2xl mb-6 border border-teal-100">
-            <button
-              type="button"
-              onClick={() => { setAuthMode('signin'); setError(''); }}
-              className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                authMode === 'signin' ? 'bg-white text-teal-950 shadow-xs' : 'text-slate-600 hover:text-teal-900'
-              }`}
-            >
-              เข้าสู่ระบบ (User)
-            </button>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('register'); setError(''); }}
-              className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                authMode === 'register' ? 'bg-white text-teal-950 shadow-xs' : 'text-slate-600 hover:text-teal-900'
-              }`}
-            >
-              สมัครสมาชิกใหม่
-            </button>
+        {/* Main Auth Form (7 cols) */}
+        <div className="md:col-span-7 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-5">
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900">
+              {authMode === 'signin' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีผู้ใช้'}
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {authMode === 'signin' ? 'ลงชื่อเข้าใช้เพื่อจัดการประกาศของคุณ' : 'กรอกข้อมูลเพื่อเริ่มต้นใช้งาน'}
+            </p>
           </div>
 
-          {error && (
-            <div className="mb-5 flex items-center gap-2 text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded-2xl text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="mb-5 flex items-center gap-2 text-teal-700 bg-teal-50 border border-teal-200 p-3 rounded-2xl text-xs">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          {/* 1-Click Google Login Button */}
+          {/* Google Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-teal-100 hover:border-teal-300 bg-white hover:bg-teal-50/40 text-slate-700 font-bold text-xs sm:text-sm shadow-xs transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-xs shadow-xs transition-all disabled:opacity-50"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -263,72 +294,86 @@ export default function Login() {
             <span>ดำเนินการต่อด้วย Google</span>
           </button>
 
-          <div className="relative my-6">
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+              <div className="w-full border-t border-slate-100" />
             </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-3 text-slate-400 font-medium">หรือเข้าสู่ระบบด้วยอีเมล</span>
+            <div className="relative flex justify-center text-[11px]">
+              <span className="bg-white px-2.5 text-slate-400 font-medium">หรือ</span>
             </div>
           </div>
 
-          <form onSubmit={authMode === 'signin' ? handleEmailLogin : handleRegister} className="space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="flex items-center gap-2 text-teal-700 bg-teal-50 border border-teal-200 p-2.5 rounded-xl text-xs">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={authMode === 'signin' ? handleEmailLogin : handleRegister} className="space-y-3.5">
             {authMode === 'register' && (
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  ชื่อที่จะแสดงในประกาศ *
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  ชื่อที่แสดงในประกาศ
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-teal-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
-                    placeholder="เช่น สมชาย ใจดี, มินนี่ อักษร"
+                    placeholder="เช่น สมชาย, มานี"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                อีเมล *
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                อีเมล
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-teal-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                รหัสผ่าน *
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                รหัสผ่าน
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-teal-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร"
+                  placeholder="อย่างน้อย 6 ตัวอักษร"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  className="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -336,89 +381,90 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm shadow-md shadow-teal-600/20 transition-all disabled:opacity-50 mt-2"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm transition-all disabled:opacity-50 mt-1"
             >
-              {loading ? 'กำลังดำเนินการ...' : authMode === 'signin' ? 'เข้าสู่ระบบ' : 'สร้างบัญชีผู้ใช้งาน'}
+              {loading ? 'กำลังดำเนินการ...' : authMode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
             </button>
           </form>
+
+          {/* Toggle Signin / Register */}
+          <div className="text-center pt-2 border-t border-slate-100">
+            {authMode === 'signin' ? (
+              <p className="text-xs text-slate-500">
+                ยังไม่มีบัญชี?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('register'); setError(''); }}
+                  className="font-bold text-teal-700 hover:underline"
+                >
+                  สมัครสมาชิก
+                </button>
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                มีบัญชีแล้ว?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('signin'); setError(''); }}
+                  className="font-bold text-teal-700 hover:underline"
+                >
+                  เข้าสู่ระบบ
+                </button>
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Side Options: Guest & Admin (5 cols) */}
         <div className="md:col-span-5 space-y-4">
           {/* Guest Mode Card */}
-          <div className="bg-white p-6 rounded-3xl border border-teal-100 shadow-xs relative overflow-hidden">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold border border-teal-100">
-                <User className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">
-                  ไม่ต้องสมัครสมาชิก
-                </span>
-                <h3 className="text-base font-bold text-slate-900">ใช้งานแบบ Guest</h3>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed mb-4">
-              คุณสามารถลงประกาศได้ทันที โดยเลือกใส่ชื่อของคุณเองหรือแสดงเป็น "Guest"
+          <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs space-y-2.5">
+            <h3 className="text-sm font-bold text-slate-900">ใช้งานแบบ Guest</h3>
+            <p className="text-xs text-slate-500">
+              ลงประกาศได้ทันทีโดยไม่ต้องเข้าสู่ระบบ
             </p>
-
             <Link
               to="/report/lost"
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-teal-50 hover:bg-teal-100/80 text-teal-800 text-xs font-bold transition-all group border border-teal-100"
+              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-800 text-xs font-semibold transition-all border border-slate-100 group"
             >
-              <span>ไปลงประกาศในฐานะ Guest</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>ไปหน้าลงประกาศ</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
-          {/* Admin / Staff Card */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  สำหรับเจ้าหน้าที่
-                </span>
-                <h3 className="text-base font-bold text-slate-900">ผู้ดูแลระบบ (Admin)</h3>
-              </div>
-            </div>
-
-            {authMode !== 'admin' ? (
+          {/* Admin Access Card */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs space-y-2.5">
+            <h3 className="text-sm font-bold text-slate-900">สำหรับเจ้าหน้าที่</h3>
+            {!showAdminLogin ? (
               <button
                 type="button"
-                onClick={() => { setAuthMode('admin'); setError(''); }}
-                className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-between transition-colors border border-slate-200/60"
+                onClick={() => { setShowAdminLogin(true); setError(''); }}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-semibold flex items-center justify-between transition-colors border border-slate-100"
               >
-                <span>เข้าสู่ระบบด้วยรหัสแอดมิน</span>
-                <KeyRound className="w-4 h-4 text-slate-400" />
+                <span>เข้าสู่ระบบ Admin</span>
+                <KeyRound className="w-3.5 h-3.5 text-slate-400" />
               </button>
             ) : (
-              <form onSubmit={handleAdminAuth} className="space-y-3">
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    autoFocus
-                    placeholder="รหัสผ่านเจ้าหน้าที่"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 outline-none focus:border-teal-500"
-                  />
-                </div>
-                <div className="flex gap-2">
+              <form onSubmit={handleAdminAuth} className="space-y-2">
+                <input
+                  type="password"
+                  autoFocus
+                  placeholder="รหัสผ่าน Admin"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-teal-500"
+                />
+                <div className="flex gap-1.5">
                   <button
                     type="button"
-                    onClick={() => { setAuthMode('signin'); setAdminPassword(''); }}
-                    className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-xl text-xs font-bold hover:bg-slate-200"
+                    onClick={() => { setShowAdminLogin(false); setAdminPassword(''); }}
+                    className="flex-1 bg-slate-100 text-slate-600 py-1.5 rounded-xl text-xs font-semibold hover:bg-slate-200"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-teal-700 text-white py-2 rounded-xl text-xs font-bold hover:bg-teal-800"
+                    className="flex-1 bg-teal-700 text-white py-1.5 rounded-xl text-xs font-semibold hover:bg-teal-800"
                   >
                     ยืนยัน
                   </button>

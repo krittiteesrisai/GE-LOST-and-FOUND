@@ -6,8 +6,14 @@ import { LogOut, Menu, X, PlusCircle, Shield, Compass } from 'lucide-react';
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, effectiveUser, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const currentUser = effectiveUser || (user ? {
+    displayName: user.displayName || user.email?.split('@')[0],
+    email: user.email,
+    photoURL: user.photoURL
+  } : null);
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -82,21 +88,21 @@ export function Navbar() {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : user ? (
+            ) : currentUser ? (
               <div className="flex items-center gap-2 pl-3 border-l border-slate-200/80">
                 <Link
                   to="/login"
                   className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200/80 hover:bg-teal-50 hover:border-teal-200 rounded-xl transition-all"
-                  title={user.email || ''}
+                  title={currentUser.email || ''}
                 >
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="" className="w-4 h-4 rounded-full" />
+                  {currentUser.photoURL ? (
+                    <img src={currentUser.photoURL} alt="" className="w-4 h-4 rounded-full" />
                   ) : (
                     <div className="w-4 h-4 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px]">
-                      {user.displayName?.[0] || 'U'}
+                      {currentUser.displayName?.[0] || 'U'}
                     </div>
                   )}
-                  <span className="max-w-[110px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+                  <span className="max-w-[110px] truncate">{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -183,10 +189,10 @@ export function Navbar() {
                     ออกจากระบบ
                   </button>
                 </div>
-              ) : user ? (
+              ) : currentUser ? (
                 <div className="flex items-center justify-between px-3.5 py-2">
                   <span className="text-xs text-slate-700 font-bold">
-                    {user.displayName || user.email}
+                    {currentUser.displayName || currentUser.email}
                   </span>
                   <button onClick={handleLogout} className="text-xs text-rose-600 font-bold">
                     ออกจากระบบ

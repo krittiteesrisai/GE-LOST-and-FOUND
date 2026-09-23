@@ -19,7 +19,7 @@ import {
 export default function ReportForm() {
   const { type, id } = useParams<{ type?: string, id?: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, effectiveUser } = useAuth();
   const isEditMode = !!id;
   
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,11 @@ export default function ReportForm() {
 
   const isLost = itemType === 'lost';
   const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+  const activeUser = effectiveUser || (user ? {
+    uid: user.uid,
+    email: user.email || '',
+    displayName: user.displayName || user.email?.split('@')[0] || 'ผู้ใช้งาน'
+  } : null);
 
   // Synchronize itemType when URL parameter (:type) changes
   useEffect(() => {
@@ -61,27 +66,31 @@ export default function ReportForm() {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setItemType(data.type || 'found');
-            setTitle(data.title || '');
-            setCategory(data.category || CATEGORIES[0]);
-            setDescription(data.description || '');
-            setLocation(data.location || '');
-            setCurrentLocation(data.currentLocation || '');
-            setDate(data.date || '');
-            setContact(data.contact || '');
-            setExistingImageUrl(data.imageUrl || '');
-            setAdminNote(data.adminNote || '');
+            setItemType(data.type);
+            setTitle(data.title);
+            setCategory(data.category);
+            setDescription(data.description);
+            setLocation(data.location);
+            if (data.currentLocation) setCurrentLocation(data.currentLocation);
+            setDate(data.date);
+            if (data.contact) setContact(data.contact);
+            if (data.imageUrl) setExistingImageUrl(data.imageUrl);
+            if (data.adminNote) setAdminNote(data.adminNote);
           } else {
-            setError('ไม่พบข้อมูลที่ต้องการแก้ไข');
+            setError('ไม่พบข้อมูลรายการที่ต้องการแก้ไข');
           }
         } catch (err) {
-          console.error(err);
           setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
         } finally {
           setLoading(false);
         }
       };
       fetchItem();
+    } else {
+      // Set default date to today string YYYY-MM-DD
+      const now = new Date();
+      const localDateStr = now.toISOString().split('T')[0];
+      setDate(localDateStr);
     }
   }, [id, isEditMode]);
 
@@ -94,19 +103,19 @@ export default function ReportForm() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
           let width = img.width;
           let height = img.height;
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
 
           if (width > height) {
             if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
+              height = Math.round((height * MAX_WIDTH) / width);
               width = MAX_WIDTH;
             }
           } else {
             if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
+              width = Math.round((width * MAX_HEIGHT) / height);
               height = MAX_HEIGHT;
             }
           }
@@ -182,10 +191,10 @@ export default function ReportForm() {
         itemData.createdAt = serverTimestamp();
         
         // Record author identity
-        if (user) {
-          itemData.authorName = user.displayName || user.email?.split('@')[0] || 'ผู้ใช้งาน';
-          itemData.authorEmail = user.email || '';
-          itemData.authorId = user.uid;
+        if (activeUser) {
+          itemData.authorName = activeUser.displayName || activeUser.email?.split('@')[0] || 'ผู้ใช้งาน';
+          itemData.authorEmail = activeUser.email || '';
+          itemData.authorId = activeUser.uid;
           itemData.isGuest = false;
         } else {
           // Guest mode: use specified name or fallback to "Guest"
@@ -212,336 +221,227 @@ export default function ReportForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto py-4 sm:py-8">
       {/* Back button */}
       <Link 
         to="/" 
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 hover:text-teal-700 mb-6 transition-colors group"
       >
-        <ArrowLeft className="w-4 h-4" /> 
-        <span>กลับหน้าหลัก</span>
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span>กลับสู่หน้าแรก</span>
       </Link>
 
-      {/* Main Form Container */}
-      <div className="bg-white rounded-3xl border border-teal-100 shadow-sm p-6 sm:p-8">
-        
-        {/* Type Switcher Tab */}
-        {!isEditMode && (
-          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-teal-50/70 border border-teal-100 mb-6">
-            <button
-              type="button"
-              onClick={() => {
-                setItemType('lost');
-                navigate('/report/lost', { replace: true });
-              }}
-              className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                isLost
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-amber-800'
-              }`}
-            >
-              <HeartHandshake className="w-4 h-4" />
-              <span>แจ้งของหาย (ตามหา)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setItemType('found');
-                navigate('/report/found', { replace: true });
-              }}
-              className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                !isLost
-                  ? 'bg-teal-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-teal-900'
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>แจ้งพบของ (เก็บได้)</span>
-            </button>
-          </div>
-        )}
+      <div className="bg-white rounded-3xl border border-teal-100 shadow-sm overflow-hidden">
+        {/* Header Banner */}
+        <div className={`p-5 sm:p-6 ${isLost ? 'bg-rose-50/50' : 'bg-teal-50/50'} border-b border-slate-100`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">
+                {isEditMode ? 'แก้ไขประกาศ' : isLost ? 'แจ้งของหาย' : 'แจ้งพบของ'}
+              </h1>
+            </div>
 
-        <div className="mb-6">
-          <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
-            {isEditMode ? 'Edit Posting' : 'Posting Form'}
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1.5">
-            {isEditMode ? 'แก้ไขข้อมูลประกาศ' : isLost ? 'ลงประกาศตามหาของหาย' : 'ลงประกาศเก็บของได้'}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            กรอกรายละเอียดให้ครบถ้วน เพื่อให้ผู้อื่นสามารถตรวจสอบและส่งคืนได้ง่าย
-          </p>
-        </div>
-
-        {/* Identity & Guest Name Field */}
-        {!isEditMode && (
-          <div className="mb-6">
-            {user ? (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-teal-50/80 border border-teal-200/80 text-xs text-teal-950">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    {user.photoURL ? (
-                      <img src={user.photoURL} alt="" className="w-9 h-9 rounded-xl object-cover" />
-                    ) : (
-                      <UserIcon className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-slate-900">ผู้ลงประกาศ:</span>
-                      <span className="font-extrabold text-teal-800">{user.displayName || user.email?.split('@')[0]}</span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-200/80 text-teal-950">
-                        ยืนยันตัวตนแล้ว
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-teal-700/80">{user.email}</p>
-                  </div>
-                </div>
-                <Link
-                  to="/login"
-                  className="text-[11px] font-bold text-teal-700 hover:text-teal-900 transition-colors"
+            {/* Toggle Lost/Found Type if not in edit mode */}
+            {!isEditMode && (
+              <div className="flex bg-slate-100 p-1 rounded-xl shrink-0 border border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={() => setItemType('lost')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    isLost ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  สลับบัญชี
-                </Link>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                      G
-                    </div>
-                    <span className="font-bold text-slate-800">ผู้ลงประกาศ (Guest):</span>
-                    <span className="text-[11px] text-slate-500">ไม่ต้องสมัครสมาชิก</span>
-                  </div>
-                  <Link
-                    to="/login"
-                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900"
-                  >
-                    เข้าสู่ระบบ
-                  </Link>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="ใส่ชื่อหรือชื่อเล่นของคุณ (เว้นว่างไว้จะเป็น Guest)"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                  />
-                </div>
+                  ของหาย
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setItemType('found')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    !isLost ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  พบของ
+                </button>
               </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* Identity Indicator / Guest Name Section */}
+        <div className="px-6 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          {activeUser ? (
+            <div className="flex items-center gap-2 text-slate-700">
+              <div className="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-[10px]">
+                {activeUser.displayName?.[0] || 'U'}
+              </div>
+              <span>
+                ผู้ลงประกาศ: <strong className="text-slate-900 font-semibold">{activeUser.displayName || activeUser.email}</strong>
+              </span>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-slate-500">โหมด Guest (ไม่ได้ล็อกอิน)</span>
+              <input
+                type="text"
+                placeholder="ชื่อที่แสดงในประกาศ"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                className="px-3 py-1 rounded-xl border border-slate-200 text-xs text-slate-900 outline-none focus:border-teal-500 bg-white"
+              />
+            </div>
+          )}
+        </div>
 
         {error && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-xl mb-6 text-xs sm:text-sm flex items-center gap-2">
+          <div className="m-6 mb-0 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Admin controls in edit mode */}
-        {isAdmin && isEditMode && (
-          <div className="bg-slate-50 p-5 rounded-2xl mb-8 border border-slate-200">
-            <h2 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-              <ShieldAlert className="w-4 h-4 text-amber-600" /> แผงควบคุมพิเศษสำหรับผู้ดูแลระบบ
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">เปลี่ยนประเภทประกาศ</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="type" 
-                      value="lost" 
-                      checked={itemType === 'lost'}
-                      onChange={(e) => setItemType(e.target.value)}
-                      className="w-4 h-4 text-orange-600 focus:ring-orange-500"
-                    />
-                    <span>ประกาศของหาย</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="type" 
-                      value="found" 
-                      checked={itemType === 'found'}
-                      onChange={(e) => setItemType(e.target.value)}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span>ประกาศพบของ</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  หมายเหตุจากแอดมิน (แสดงเป็นแถบข้อความให้ทุกคนเห็น)
-                </label>
-                <textarea 
-                  rows={2}
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                  placeholder="เช่น ผู้เก็บได้นำมาฝากไว้ที่ฝ่ายกิจการนักศึกษาแล้ว ติดต่อรับได้ในเวลาราชการ"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Item Title */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              ชื่อสิ่งของ <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              ชื่อสิ่งของ *
             </label>
-            <input 
-              required 
-              type="text" 
+            <input
+              type="text"
+              required
+              placeholder={isLost ? "เช่น กระเป๋าสตางค์สีดำ, บัตรนักศึกษา" : "เช่น กุญแจรถ, ไอโฟน 13 เคสใส"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
-              placeholder="เช่น หูฟัง AirPods Pro เคสสีใส, บัตรนักศึกษา"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500"
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              หมวดหมู่สิ่งของ <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <select 
+          {/* Category & Date Grid */}
+          <div className="grid sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                หมวดหมู่ *
+              </label>
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white appearance-none cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500 bg-white"
               >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
-              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                {isLost ? "วันที่หาย *" : "วันที่พบ *"}
+              </label>
+              <input
+                type="date"
+                required
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500 bg-white"
+              />
             </div>
           </div>
 
-          {/* Description */}
+          {/* Location */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-700">
-                รายละเอียด / ลักษณะเด่น <span className="text-rose-500">*</span>
-              </label>
-              <span className="text-[11px] text-slate-400">ยี่ห้อ, สี, รอยตำหนิ</span>
-            </div>
-            <textarea 
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              {isLost ? "สถานที่คาดว่าทำหาย *" : "สถานที่ที่พบ *" }
+            </label>
+            <input
+              type="text"
               required
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none transition-all placeholder:text-slate-400"
-              placeholder="ระบุสี รอยตำหนิ ลวดลาย หรือสิ่งของที่อยู่ข้างใน เพื่อใช้ในการยืนยันความเป็นเจ้าของ"
+              placeholder="เช่น ตึกทันตะ 1 ชั้น 3, โรงอาหารคณะ"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500"
             />
           </div>
 
-          {/* Location and Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {isLost ? 'สถานที่คาดว่าทำหาย' : 'สถานที่ที่พบ'} <span className="text-rose-500">*</span>
-              </label>
-              <input 
-                required 
-                type="text" 
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
-                placeholder="เช่น โรงอาหารกลาง, หน้าตึก 3"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {isLost ? 'วันที่และเวลาที่คาดว่าหาย' : 'วันที่และเวลาที่พบ'} <span className="text-rose-500">*</span>
-              </label>
-              <input 
-                required 
-                type="datetime-local" 
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Current deposit location for found items */}
+          {/* Current Location (For Found Items) */}
           {!isLost && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                สถานที่นำของไปฝากไว้ในปัจจุบัน <span className="text-rose-500">*</span>
+            <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-100 space-y-1.5">
+              <label className="block text-xs font-semibold text-teal-900">
+                จุดฝากสิ่งของปัจจุบัน *
               </label>
-              <input 
-                required 
-                type="text" 
+              <input
+                type="text"
+                required={!isLost}
+                placeholder="เช่น ป้อม รปภ. ประตู 1 หรือ อยู่กับผู้แจ้ง"
                 value={currentLocation}
                 onChange={(e) => setCurrentLocation(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400"
-                placeholder="เช่น ป้อม รปภ. ประตู 1, ห้องธุรการชั้น 2"
+                className="w-full px-3 py-2 rounded-lg border border-teal-200 bg-white text-xs sm:text-sm text-slate-900 outline-none focus:border-teal-500"
               />
             </div>
           )}
 
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              รายละเอียด / จุดสังเกต
+            </label>
+            <textarea
+              rows={3}
+              placeholder="เช่น สี, รอยตำหนิ, พวงกุญแจ..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500"
+            ></textarea>
+          </div>
+
           {/* Contact Information */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              ช่องทางติดต่อกลับ <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              เบอร์โทร / LINE ID *
             </label>
-            <input 
-              required 
-              type="text" 
+            <input
+              type="text"
+              required
+              placeholder="เช่น 081-234-5678 หรือ Line ID"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
-              placeholder="เบอร์โทรศัพท์ / LINE ID / Instagram / อีเมล"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500"
             />
           </div>
 
-          {/* Photo Upload Zone */}
+          {/* Image Upload Area */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              รูปภาพสิ่งของ (ถ้ามี)
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              รูปภาพ (ถ้ามี)
             </label>
             
             {imagePreview || existingImageUrl ? (
-              <div className="relative w-44 h-44 rounded-2xl overflow-hidden border border-slate-200 shadow-xs group">
-                <img 
-                  src={imagePreview || existingImageUrl} 
-                  alt="ตัวอย่างรูปภาพ" 
-                  className="w-full h-full object-cover" 
+              <div className="relative inline-block border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 p-2">
+                <img
+                  src={imagePreview || existingImageUrl}
+                  alt="Preview"
+                  className="w-48 h-48 object-cover rounded-xl"
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => {
-                    setImageFile(null); 
                     setImagePreview('');
                     setExistingImageUrl('');
+                    setImageFile(null);
                   }}
-                  className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1.5 shadow-md transition-colors"
+                  className="absolute top-4 right-4 bg-rose-600 text-white p-1.5 rounded-full shadow-md hover:bg-rose-700 transition-colors"
                   title="ลบรูปภาพ"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 hover:border-slate-400 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 mb-2">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-semibold text-slate-700">คลิกเพื่อเลือกรูปภาพจากเครื่อง</span>
-                <span className="text-[11px] text-slate-400 mt-1">รองรับ JPG, PNG (ขนาดไม่เกิน 5MB)</span>
-                <input 
-                  type="file" 
+              <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-teal-200 hover:border-teal-400 bg-teal-50/20 hover:bg-teal-50/50 rounded-2xl cursor-pointer transition-all">
+                <Camera className="w-8 h-8 text-teal-600 mb-2" />
+                <span className="text-xs font-bold text-slate-700">คลิกเพื่ออัปโหลดรูปภาพสิ่งของ</span>
+                <span className="text-[10px] text-slate-400 mt-1">รองรับ JPG, PNG สูงสุด 5MB (ระบบบีบอัดอัตโนมัติ)</span>
+                <input
+                  type="file"
                   accept="image/*"
                   onChange={handleImageChange}
                   className="hidden"
@@ -550,28 +450,47 @@ export default function ReportForm() {
             )}
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-4 border-t border-slate-100">
-            <button 
-              type="submit" 
+          {/* Admin Note field (Visible only to Admin in Edit Mode) */}
+          {isAdmin && isEditMode && (
+            <div className="p-4 rounded-2xl bg-slate-100 border border-slate-300/80 space-y-2">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                🛡️ บันทึกช่วยจำสำหรับแอดมิน (Admin Note)
+              </label>
+              <textarea
+                rows={2}
+                placeholder="โน้ตสำหรับเจ้าหน้าที่ (เช่น ได้รับคืนแล้วที่ตึก 2 เจ้าของติดต่อผ่าน LINE แล้ว)"
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 outline-none focus:border-teal-500"
+              />
+            </div>
+          )}
+
+          {/* Submit Buttons */}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
               disabled={loading}
-              className={`w-full py-3.5 rounded-2xl text-white font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 ${
-                loading 
-                  ? 'bg-slate-400 cursor-not-allowed' 
-                  : isLost 
-                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/20' 
-                    : 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-teal-600/25'
-              }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-bold text-white shadow-md transition-all ${
+                isLost
+                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                  : 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/20'
+              } disabled:opacity-50`}
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  <span>กำลังบันทึกข้อมูล...</span>
-                </>
-              ) : isEditMode ? (
-                <span>บันทึกการแก้ไข</span>
+                <span>กำลังบันทึกข้อมูล...</span>
               ) : (
-                <span>เผยแพร่ประกาศทันที</span>
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>{isEditMode ? 'บันทึกการแก้ไข' : 'เผยแพร่ประกาศทันที'}</span>
+                </>
               )}
             </button>
           </div>
