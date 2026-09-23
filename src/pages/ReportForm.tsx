@@ -156,20 +156,24 @@ export default function ReportForm() {
     setError('');
     if (step === 1) {
       if (!title.trim()) {
-        setError('กรุณาระบุชื่อสิ่งของ');
+        setError('กรุณาระบุชื่อสิ่งของ (จำเป็น)');
+        return false;
+      }
+      if (!description.trim()) {
+        setError('กรุณากรอกรายละเอียดหรือจุดสังเกตของสิ่งของ (จำเป็น)');
         return false;
       }
     } else if (step === 2) {
       if (!location.trim()) {
-        setError(isLost ? 'กรุณาระบุสถานที่ที่คาดว่าทำหาย' : 'กรุณาระบุสถานที่ที่พบสิ่งของ');
+        setError(isLost ? 'กรุณาระบุสถานที่ที่คาดว่าทำหาย (จำเป็น)' : 'กรุณาระบุสถานที่ที่พบสิ่งของ (จำเป็น)');
         return false;
       }
       if (!date) {
-        setError('กรุณาเลือกวันที่');
+        setError('กรุณาเลือกวันที่ (จำเป็น)');
         return false;
       }
       if (!isLost && !currentLocation.trim()) {
-        setError('กรุณาระบุจุดฝากสิ่งของปัจจุบัน');
+        setError('กรุณาระบุจุดฝากสิ่งของปัจจุบัน (จำเป็น)');
         return false;
       }
     }
@@ -396,8 +400,11 @@ export default function ReportForm() {
           {currentStep === 1 && (
             <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ชื่อสิ่งของ *
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>ชื่อสิ่งของ</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -411,8 +418,11 @@ export default function ReportForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  หมวดหมู่ *
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>หมวดหมู่</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
                 <select
                   value={category}
@@ -428,12 +438,19 @@ export default function ReportForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  รายละเอียด / จุดสังเกต
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>รายละเอียด / จุดสังเกต</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
+                <p className="text-[11px] text-slate-500 mb-1.5">
+                  ระบุรายละเอียด เช่น สี ยี่ห้อ รอยตำหนิ หรือสัญลักษณ์เฉพาะ เพื่อช่วยยืนยันความเป็นเจ้าของ
+                </p>
                 <textarea
                   rows={3}
-                  placeholder="เช่น สี, รอยตำหนิ, พวงกุญแจ, สติ๊กเกอร์..."
+                  required
+                  placeholder="เช่น สีดำล้วน มีรอยขีดข่วนด้านหลัง ห้อยพวงกุญแจตุ๊กตาหมีสีน้ำตาล..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all"
@@ -446,8 +463,11 @@ export default function ReportForm() {
           {currentStep === 2 && (
             <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {isLost ? "สถานที่คาดว่าทำหาย *" : "สถานที่ที่พบสิ่งของ *" }
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>{isLost ? "สถานที่คาดว่าทำหาย" : "สถานที่ที่พบสิ่งของ"}</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -461,8 +481,11 @@ export default function ReportForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {isLost ? "วันที่ทำหาย *" : "วันที่พบเจอ *"}
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>{isLost ? "วันที่ทำหาย" : "วันที่พบเจอ"}</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
                 <input
                   type="date"
@@ -475,8 +498,11 @@ export default function ReportForm() {
 
               {!isLost && (
                 <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-100 space-y-1.5">
-                  <label className="block text-xs font-semibold text-teal-900">
-                    จุดฝากสิ่งของในปัจจุบัน *
+                  <label className="flex items-center justify-between text-xs font-semibold text-teal-900">
+                    <span>จุดฝากสิ่งของในปัจจุบัน</span>
+                    <span className="text-teal-800 font-bold text-[10px] bg-white px-2 py-0.5 rounded-full border border-teal-200">
+                      * จำเป็น
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -499,8 +525,11 @@ export default function ReportForm() {
             <div className="space-y-4 animate-fadeIn">
               {/* Contact */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  เบอร์โทรศัพท์ / LINE ID *
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>เบอร์โทรศัพท์ / LINE ID</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                    * จำเป็น
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -515,8 +544,11 @@ export default function ReportForm() {
 
               {/* Image Upload Area */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  รูปภาพประกอบ (ถ้ามี)
+                <label className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                  <span>รูปภาพประกอบ</span>
+                  <span className="text-slate-500 font-medium text-[10px] bg-slate-100 px-2 py-0.5 rounded-full">
+                    ไม่บังคับ (ถ้ามี)
+                  </span>
                 </label>
                 
                 {imagePreview || existingImageUrl ? (

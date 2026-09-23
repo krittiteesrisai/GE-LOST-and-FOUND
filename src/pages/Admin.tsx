@@ -171,8 +171,9 @@ export default function Admin() {
     setStatusAction(null);
     try {
       const newStatus = action === 'resolve' ? 'resolved' : 'active';
-      await updateDoc(doc(db, 'items', id), { status: newStatus });
-      setItems(items.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      const newStage = newStatus === 'resolved' ? 'resolved' : 'review';
+      await updateDoc(doc(db, 'items', id), { status: newStatus, stage: newStage });
+      setItems(items.map(item => item.id === id ? { ...item, status: newStatus, stage: newStage } : item));
     } catch (error) {
       console.error("Error updating document: ", error);
     }
