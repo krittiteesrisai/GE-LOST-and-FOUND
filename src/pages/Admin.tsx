@@ -89,8 +89,8 @@ export default function Admin() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="p-1 rounded-lg bg-slate-900 text-white">
-              <ShieldCheck className="w-4 h-4" />
+            <span className="p-1.5 rounded-xl bg-teal-800 text-white shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-cyan-300" />
             </span>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
               ระบบจัดการสำหรับเจ้าหน้าที่ (Staff Portal)
@@ -104,14 +104,14 @@ export default function Admin() {
         <div className="flex items-center gap-2 shrink-0">
           <button 
             onClick={fetchItems} 
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-white border border-teal-100 text-slate-700 rounded-xl hover:bg-teal-50/50 transition-colors shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>รีเฟรช</span>
           </button>
           <button 
             onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 rounded-xl hover:bg-rose-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 rounded-xl hover:bg-rose-100 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>ออกจากระบบ</span>
@@ -121,32 +121,32 @@ export default function Admin() {
 
       {/* KPI Counters Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-3xl border border-teal-100/90 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ประกาศทั้งหมด</span>
-            <p className="text-2xl font-extrabold text-slate-900 mt-0.5">{totalCount}</p>
+            <p className="text-3xl font-extrabold text-slate-900 mt-0.5">{totalCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
-            Σ
+          <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center font-bold text-base">
+            ✦
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-3xl border border-teal-100/90 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider">กำลังดำเนินการ</span>
-            <p className="text-2xl font-extrabold text-orange-600 mt-0.5">{activeCount}</p>
+            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">กำลังดำเนินการ</span>
+            <p className="text-3xl font-extrabold text-amber-800 mt-0.5">{activeCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
             <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-3xl border border-teal-100/90 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">ส่งมอบคืนแล้ว</span>
-            <p className="text-2xl font-extrabold text-emerald-600 mt-0.5">{resolvedCount}</p>
+            <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">ส่งมอบคืนแล้ว</span>
+            <p className="text-3xl font-extrabold text-teal-800 mt-0.5">{resolvedCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>

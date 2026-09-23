@@ -4,7 +4,17 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'fir
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES } from '../types';
-import { ShieldUser, Upload, X, AlertCircle, CheckCircle2, ArrowLeft, Camera, Image as ImageIcon, User as UserIcon } from 'lucide-react';
+import { 
+  ShieldAlert, 
+  X, 
+  AlertCircle, 
+  ArrowLeft, 
+  Camera, 
+  User as UserIcon,
+  Check,
+  CheckCircle2,
+  HeartHandshake
+} from 'lucide-react';
 
 export default function ReportForm() {
   const { type, id } = useParams<{ type?: string, id?: string }>();
@@ -28,6 +38,9 @@ export default function ReportForm() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [existingImageUrl, setExistingImageUrl] = useState<string>('');
   const [adminNote, setAdminNote] = useState('');
+
+  // Guest name state
+  const [guestName, setGuestName] = useState('');
 
   const isLost = itemType === 'lost';
   const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -139,17 +152,17 @@ export default function ReportForm() {
       }
 
       const itemData: any = {
-        title,
+        title: title.trim(),
         category,
-        description,
-        location,
+        description: description.trim(),
+        location: location.trim(),
         date,
-        contact,
+        contact: contact.trim(),
         imageUrl,
       };
 
       if (!isLost) {
-        itemData.currentLocation = currentLocation;
+        itemData.currentLocation = currentLocation.trim();
       }
 
       if (isAdmin && isEditMode) {
@@ -175,7 +188,8 @@ export default function ReportForm() {
           itemData.authorId = user.uid;
           itemData.isGuest = false;
         } else {
-          itemData.authorName = 'Guest';
+          // Guest mode: use specified name or fallback to "Guest"
+          itemData.authorName = guestName.trim() ? guestName.trim() : 'Guest';
           itemData.authorEmail = '';
           itemData.authorId = 'guest';
           itemData.isGuest = true;
@@ -208,23 +222,25 @@ export default function ReportForm() {
         <span>กลับหน้าหลัก</span>
       </Link>
 
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10">
+      {/* Main Form Container */}
+      <div className="bg-white rounded-3xl border border-teal-100 shadow-sm p-6 sm:p-8">
+        
         {/* Type Switcher Tab */}
         {!isEditMode && (
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
+          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-teal-50/70 border border-teal-100 mb-6">
             <button
               type="button"
               onClick={() => {
                 setItemType('lost');
                 navigate('/report/lost', { replace: true });
               }}
-              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 isLost
-                  ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-slate-600 hover:text-orange-600'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-amber-800'
               }`}
             >
-              <AlertCircle className="w-4 h-4" />
+              <HeartHandshake className="w-4 h-4" />
               <span>แจ้งของหาย (ตามหา)</span>
             </button>
             <button
@@ -233,10 +249,10 @@ export default function ReportForm() {
                 setItemType('found');
                 navigate('/report/found', { replace: true });
               }}
-              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 !isLost
-                  ? 'bg-white text-emerald-600 shadow-sm'
-                  : 'text-slate-600 hover:text-emerald-600'
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-teal-900'
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -245,24 +261,27 @@ export default function ReportForm() {
           </div>
         )}
 
-        <div>
+        <div className="mb-6">
+          <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
+            {isEditMode ? 'Edit Posting' : 'Posting Form'}
+          </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1.5">
             {isEditMode ? 'แก้ไขข้อมูลประกาศ' : isLost ? 'ลงประกาศตามหาของหาย' : 'ลงประกาศเก็บของได้'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mb-5">
+          <p className="text-xs sm:text-sm text-slate-500">
             กรอกรายละเอียดให้ครบถ้วน เพื่อให้ผู้อื่นสามารถตรวจสอบและส่งคืนได้ง่าย
           </p>
         </div>
 
-        {/* Identity Status Pill: User vs Guest */}
+        {/* Identity & Guest Name Field */}
         {!isEditMode && (
           <div className="mb-6">
             {user ? (
-              <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-orange-50/80 border border-orange-200/80 text-xs text-orange-950">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-teal-50/80 border border-teal-200/80 text-xs text-teal-950">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                     {user.photoURL ? (
-                      <img src={user.photoURL} alt="" className="w-8 h-8 rounded-xl object-cover" />
+                      <img src={user.photoURL} alt="" className="w-9 h-9 rounded-xl object-cover" />
                     ) : (
                       <UserIcon className="w-4 h-4" />
                     )}
@@ -270,50 +289,57 @@ export default function ReportForm() {
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-slate-900">ผู้ลงประกาศ:</span>
-                      <span className="font-extrabold text-orange-600">{user.displayName || user.email?.split('@')[0]}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-200/80 text-orange-900">
+                      <span className="font-extrabold text-teal-800">{user.displayName || user.email?.split('@')[0]}</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-200/80 text-teal-950">
                         ยืนยันตัวตนแล้ว
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500">{user.email}</p>
+                    <p className="text-[11px] text-teal-700/80">{user.email}</p>
                   </div>
                 </div>
                 <Link
                   to="/login"
-                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                  className="text-[11px] font-bold text-teal-700 hover:text-teal-900 transition-colors"
                 >
                   สลับบัญชี
                 </Link>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                    G
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-slate-800">ผู้ลงประกาศ:</span>
-                      <span className="font-extrabold text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded text-[11px]">Guest</span>
-                      <span className="text-[11px] text-slate-500">(ผู้ใช้ทั่วไป)</span>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
+                      G
                     </div>
-                    <p className="text-[11px] text-slate-400">ประกาศจะแสดงชื่อเป็น "Guest"</p>
+                    <span className="font-bold text-slate-800">ผู้ลงประกาศ (Guest):</span>
+                    <span className="text-[11px] text-slate-500">ไม่ต้องสมัครสมาชิก</span>
                   </div>
+                  <Link
+                    to="/login"
+                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900"
+                  >
+                    เข้าสู่ระบบ
+                  </Link>
                 </div>
-                <Link
-                  to="/login"
-                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-orange-600 font-bold text-xs border border-slate-200 shadow-xs transition-colors shrink-0"
-                >
-                  เข้าสู่ระบบ
-                </Link>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="ใส่ชื่อหรือชื่อเล่นของคุณ (เว้นว่างไว้จะเป็น Guest)"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
               </div>
             )}
           </div>
         )}
 
         {error && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-xl mb-6 text-xs sm:text-sm">
-            {error}
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-xl mb-6 text-xs sm:text-sm flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -321,7 +347,7 @@ export default function ReportForm() {
         {isAdmin && isEditMode && (
           <div className="bg-slate-50 p-5 rounded-2xl mb-8 border border-slate-200">
             <h2 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-              <ShieldUser className="w-4 h-4 text-amber-600" /> แผงควบคุมพิเศษสำหรับผู้ดูแลระบบ
+              <ShieldAlert className="w-4 h-4 text-amber-600" /> แผงควบคุมพิเศษสำหรับผู้ดูแลระบบ
             </h2>
             <div className="space-y-4">
               <div>
@@ -378,7 +404,7 @@ export default function ReportForm() {
               type="text" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all placeholder:text-slate-400"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
               placeholder="เช่น หูฟัง AirPods Pro เคสสีใส, บัตรนักศึกษา"
             />
           </div>
@@ -392,7 +418,7 @@ export default function ReportForm() {
               <select 
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white appearance-none cursor-pointer"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white appearance-none cursor-pointer"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -415,7 +441,7 @@ export default function ReportForm() {
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all placeholder:text-slate-400"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none transition-all placeholder:text-slate-400"
               placeholder="ระบุสี รอยตำหนิ ลวดลาย หรือสิ่งของที่อยู่ข้างใน เพื่อใช้ในการยืนยันความเป็นเจ้าของ"
             />
           </div>
@@ -431,7 +457,7 @@ export default function ReportForm() {
                 type="text" 
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all placeholder:text-slate-400"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
                 placeholder="เช่น โรงอาหารกลาง, หน้าตึก 3"
               />
             </div>
@@ -444,7 +470,7 @@ export default function ReportForm() {
                 type="datetime-local" 
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
               />
             </div>
           </div>
@@ -476,7 +502,7 @@ export default function ReportForm() {
               type="text" 
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all placeholder:text-slate-400"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
               placeholder="เบอร์โทรศัพท์ / LINE ID / Instagram / อีเมล"
             />
           </div>
@@ -529,12 +555,12 @@ export default function ReportForm() {
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full py-3 rounded-xl text-white font-bold text-sm shadow-sm hover:shadow transition-all active:scale-[0.99] flex items-center justify-center gap-2 ${
+              className={`w-full py-3.5 rounded-2xl text-white font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 ${
                 loading 
                   ? 'bg-slate-400 cursor-not-allowed' 
                   : isLost 
-                    ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/20' 
-                    : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/20' 
+                    : 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-teal-600/25'
               }`}
             >
               {loading ? (
@@ -545,7 +571,7 @@ export default function ReportForm() {
               ) : isEditMode ? (
                 <span>บันทึกการแก้ไข</span>
               ) : (
-                <span>เผยแพร่ประกาศ</span>
+                <span>เผยแพร่ประกาศทันที</span>
               )}
             </button>
           </div>
@@ -554,4 +580,3 @@ export default function ReportForm() {
     </div>
   );
 }
-

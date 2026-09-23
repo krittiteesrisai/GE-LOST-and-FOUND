@@ -17,7 +17,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isGuest: boolean;
   authorDisplayName: string;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<User | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, displayName: string) => Promise<void>;
   loginAsAdmin: (password: string) => boolean;
@@ -42,10 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (): Promise<User | null> => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        setUser(result.user);
+      }
+      return result.user;
     } catch (error: any) {
+      if (
+        error?.code === 'auth/popup-closed-by-user' ||
+        error?.code === 'auth/cancelled-popup-request' ||
+        error?.message?.includes('popup-closed-by-user')
+      ) {
+        // User closed or cancelled the popup - expected user interaction, no error to report
+        return null;
+      }
       console.error('Google Sign-in error:', error);
       throw error;
     }
