@@ -41,9 +41,9 @@ export default function ItemsList() {
   };
 
   // Filters State
-  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found' | 'mine'>(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'lost' || tabParam === 'found' || tabParam === 'mine') return tabParam;
+  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found' | 'resolved' | 'mine'>(() => {
+    const tabParam = searchParams.get('tab') || searchParams.get('type');
+    if (tabParam === 'lost' || tabParam === 'found' || tabParam === 'resolved' || tabParam === 'mine') return tabParam;
     return 'all';
   });
 
@@ -56,8 +56,10 @@ export default function ItemsList() {
   useEffect(() => {
     const query = searchParams.get('q');
     if (query !== null) setSearchTerm(query);
-    const tab = searchParams.get('tab');
-    if (tab === 'lost' || tab === 'found' || tab === 'all') setActiveTab(tab);
+    const tab = searchParams.get('tab') || searchParams.get('type');
+    if (tab === 'lost' || tab === 'found' || tab === 'resolved' || tab === 'mine' || tab === 'all') {
+      setActiveTab(tab as any);
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -77,12 +79,28 @@ export default function ItemsList() {
     fetchItems();
   }, []);
 
+  // Switch tabs and update URL
+  const handleTabChange = (newTab: 'all' | 'lost' | 'found' | 'resolved' | 'mine') => {
+    setActiveTab(newTab);
+    const params = new URLSearchParams(searchParams);
+    if (newTab === 'all') {
+      params.delete('tab');
+      params.delete('type');
+    } else {
+      params.set('tab', newTab);
+      params.delete('type');
+    }
+    setSearchParams(params);
+  };
+
   // Filter items
   const filteredItems = items.filter(item => {
     if (activeTab === 'mine') {
       if (!isMyItem(item)) return false;
-    } else if (activeTab !== 'all' && item.type !== activeTab) {
-      return false;
+    } else if (activeTab === 'resolved') {
+      if (item.status !== 'resolved') return false;
+    } else if (activeTab === 'lost' || activeTab === 'found') {
+      if (item.type !== activeTab) return false;
     }
     if (selectedCategory && item.category !== selectedCategory) {
       return false;
@@ -157,10 +175,10 @@ export default function ItemsList() {
           </div>
 
           {/* Segmented Control Switcher */}
-          <div className="inline-flex bg-teal-50/80 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-teal-100">
+          <div className="inline-flex bg-teal-50/80 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-teal-100 flex-wrap">
             <button
-              onClick={() => setActiveTab('all')}
-              className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all ${
+              onClick={() => handleTabChange('all')}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'all'
                   ? 'bg-white text-teal-950 shadow-xs'
                   : 'text-slate-600 hover:text-teal-900'
@@ -169,8 +187,8 @@ export default function ItemsList() {
               ทั้งหมด
             </button>
             <button
-              onClick={() => setActiveTab('lost')}
-              className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 ${
+              onClick={() => handleTabChange('lost')}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'lost'
                   ? 'bg-white text-amber-600 shadow-xs'
                   : 'text-slate-600 hover:text-amber-700'
@@ -180,8 +198,8 @@ export default function ItemsList() {
               ตามหาของ
             </button>
             <button
-              onClick={() => setActiveTab('found')}
-              className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 ${
+              onClick={() => handleTabChange('found')}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'found'
                   ? 'bg-white text-teal-700 shadow-xs'
                   : 'text-slate-600 hover:text-teal-900'
@@ -191,8 +209,19 @@ export default function ItemsList() {
               พบของ
             </button>
             <button
-              onClick={() => setActiveTab('mine')}
-              className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 ${
+              onClick={() => handleTabChange('resolved')}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'resolved'
+                  ? 'bg-white text-emerald-700 shadow-xs'
+                  : 'text-slate-600 hover:text-emerald-700'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              ส่งคืนแล้ว
+            </button>
+            <button
+              onClick={() => handleTabChange('mine')}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
                 activeTab === 'mine'
                   ? 'bg-white text-teal-950 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-teal-900'

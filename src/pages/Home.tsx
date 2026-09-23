@@ -320,91 +320,76 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. Dashboard Section (อยู่ข้างบนตามคำขอ) */}
-      <section className="space-y-4">
-        {/* Dashboard 3 Metrics */}
+      {/* 2. Dashboard Section (ตัวเลขสถิติคลิกเพื่อเปิดดูตามแท็บได้ทันที) */}
+      <section className="space-y-3.5">
+        {/* Dashboard 3 Clickable Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className="bg-white rounded-2xl p-4.5 border border-amber-100/90 shadow-2xs flex items-center justify-between">
+          <Link
+            to="/list?tab=lost"
+            className="bg-white hover:bg-amber-50/50 rounded-2xl p-4.5 border border-amber-200/80 hover:border-amber-400 shadow-2xs hover:shadow-xs transition-all duration-150 flex items-center justify-between group cursor-pointer"
+            title="คลิกเพื่อเปิดดูรายการของหาย"
+          >
             <div>
-              <span className="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">กำลังตามหา</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">กำลังตามหา</span>
+              </div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5 group-hover:text-amber-700 transition-colors">
                 {stats.lost}
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">สิ่งของที่รอการติดต่อส่งมอบ</p>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold shadow-2xs">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4.5 border border-teal-100/90 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold text-teal-700 uppercase tracking-wider">พบของแล้ว</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5">
-                {stats.found}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">สิ่งของที่เก็บรักษาไว้รอเจ้าของ</p>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center font-bold shadow-2xs">
-              <Package className="w-5 h-5 text-teal-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4.5 border border-emerald-100/90 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">ส่งคืนสำเร็จ</span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5">
-                {stats.resolved}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">ส่งมอบคืนสู่เจ้าของเรียบร้อย</p>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold shadow-2xs">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* 2 Main Portals */}
-        <div className="grid sm:grid-cols-2 gap-3.5">
-          <Link
-            to="/list?type=lost"
-            className="bg-white hover:bg-amber-50/40 p-4.5 rounded-2xl border border-slate-200/90 hover:border-amber-300 transition-all shadow-2xs flex items-center justify-between group cursor-pointer"
-          >
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Lost Items
-              </span>
-              <h3 className="text-base font-extrabold text-slate-900 group-hover:text-amber-800 transition-colors">
-                ตามหาของหาย
-              </h3>
-              <p className="text-xs text-slate-500">
-                เปิดดูสิ่งของที่เจ้าของกำลังเฝ้ารอคอย ({stats.lost} รายการ) &rarr;
+              <p className="text-[11px] text-amber-600/90 font-medium mt-0.5 inline-flex items-center gap-1">
+                <span>เปิดดูของหาย</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-lg font-bold shrink-0">
-              🔍
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <Clock className="w-5 h-5 text-amber-600" />
             </div>
           </Link>
 
           <Link
-            to="/list?type=found"
-            className="bg-white hover:bg-teal-50/40 p-4.5 rounded-2xl border border-slate-200/90 hover:border-teal-300 transition-all shadow-2xs flex items-center justify-between group cursor-pointer"
+            to="/list?tab=found"
+            className="bg-white hover:bg-teal-50/50 rounded-2xl p-4.5 border border-teal-200/80 hover:border-teal-400 shadow-2xs hover:shadow-xs transition-all duration-150 flex items-center justify-between group cursor-pointer"
+            title="คลิกเพื่อเปิดดูรายการพบของ"
           >
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                Found Items
-              </span>
-              <h3 className="text-base font-extrabold text-slate-900 group-hover:text-teal-800 transition-colors">
-                พบของแล้ว (รอเจ้าของ)
-              </h3>
-              <p className="text-xs text-slate-500">
-                ตรวจสอบของที่เก็บได้และฝากไว้ ({stats.found} รายการ) &rarr;
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-500" />
+                <span className="text-[11px] font-extrabold text-teal-700 uppercase tracking-wider">พบของแล้ว</span>
+              </div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5 group-hover:text-teal-700 transition-colors">
+                {stats.found}
+              </div>
+              <p className="text-[11px] text-teal-600/90 font-medium mt-0.5 inline-flex items-center gap-1">
+                <span>เปิดดูของที่พบ</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center text-lg font-bold shrink-0">
-              📦
+            <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <Package className="w-5 h-5 text-teal-600" />
+            </div>
+          </Link>
+
+          <Link
+            to="/list?tab=resolved"
+            className="bg-white hover:bg-emerald-50/50 rounded-2xl p-4.5 border border-emerald-200/80 hover:border-emerald-400 shadow-2xs hover:shadow-xs transition-all duration-150 flex items-center justify-between group cursor-pointer"
+            title="คลิกเพื่อเปิดดูรายการส่งคืนสำเร็จ"
+          >
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">ส่งคืนสำเร็จ</span>
+              </div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5 group-hover:text-emerald-700 transition-colors">
+                {stats.resolved}
+              </div>
+              <p className="text-[11px] text-emerald-600/90 font-medium mt-0.5 inline-flex items-center gap-1">
+                <span>เปิดดูส่งคืนแล้ว</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             </div>
           </Link>
         </div>
