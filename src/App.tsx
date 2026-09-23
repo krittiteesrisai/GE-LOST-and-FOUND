@@ -7,6 +7,7 @@ import ReportForm from './pages/ReportForm';
 import ItemDetail from './pages/ItemDetail';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
+import MyPosts from './pages/MyPosts';
 import { HeartHandshake, ShieldCheck, Sparkles, HelpCircle } from 'lucide-react';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/list" element={<ItemsList />} />
+              <Route path="/my-posts" element={<MyPosts />} />
               <Route path="/report" element={<ReportForm />} />
               <Route path="/report/:type" element={<ReportForm />} />
               <Route path="/edit/:id" element={<ReportForm />} />

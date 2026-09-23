@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Item, CATEGORIES } from '../types';
+import { useAuth } from '../context/AuthContext';
 import { 
   Search, 
   MapPin, 
@@ -13,21 +14,36 @@ import {
   Backpack, 
   Glasses, 
   HelpCircle, 
-  User,
-  Check,
-  Plus
+  User, 
+  Check, 
+  Plus,
+  Package,
+  X
 } from 'lucide-react';
+import { matchItemWithSearch } from '../utils/searchMatcher';
 
 export default function ItemsList() {
+  const { user, effectiveUser } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const activeUid = effectiveUser?.uid || user?.uid;
+  const activeEmail = effectiveUser?.email || user?.email;
+  const localMyItems: string[] = JSON.parse(localStorage.getItem('myItems') || '[]');
+
+  const isMyItem = (item: Item) => {
+    if (item.id && localMyItems.includes(item.id)) return true;
+    if (activeUid && item.authorId === activeUid) return true;
+    if (activeEmail && item.authorEmail === activeEmail) return true;
+    return false;
+  };
+
   // Filters State
-  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found'>(() => {
+  const [activeTab, setActiveTab] = useState<'all' | 'lost' | 'found' | 'mine'>(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'lost' || tabParam === 'found') return tabParam;
+    if (tabParam === 'lost' || tabParam === 'found' || tabParam === 'mine') return tabParam;
     return 'all';
   });
 
@@ -63,7 +79,9 @@ export default function ItemsList() {
 
   // Filter items
   const filteredItems = items.filter(item => {
-    if (activeTab !== 'all' && item.type !== activeTab) {
+    if (activeTab === 'mine') {
+      if (!isMyItem(item)) return false;
+    } else if (activeTab !== 'all' && item.type !== activeTab) {
       return false;
     }
     if (selectedCategory && item.category !== selectedCategory) {
@@ -73,19 +91,21 @@ export default function ItemsList() {
       return false;
     }
     if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      const matchTitle = item.title?.toLowerCase().includes(term);
-      const matchDesc = item.description?.toLowerCase().includes(term);
-      const matchLocation = item.location?.toLowerCase().includes(term);
-      const matchCategory = item.category?.toLowerCase().includes(term);
-      const matchContact = item.contact?.toLowerCase().includes(term);
-      const matchAuthor = item.authorName?.toLowerCase().includes(term);
-      if (!matchTitle && !matchDesc && !matchLocation && !matchCategory && !matchContact && !matchAuthor) {
+      const matchResult = matchItemWithSearch(item, searchTerm);
+      if (!matchResult.isMatch) {
         return false;
       }
     }
     return true;
   }).sort((a, b) => {
+    // If user is searching, prioritize highest match score first!
+    if (searchTerm.trim()) {
+      const scoreA = matchItemWithSearch(a, searchTerm).score;
+      const scoreB = matchItemWithSearch(b, searchTerm).score;
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+    }
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
@@ -170,6 +190,17 @@ export default function ItemsList() {
               <span className="w-2 h-2 rounded-full bg-teal-600" />
               พบของ
             </button>
+            <button
+              onClick={() => setActiveTab('mine')}
+              className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 ${
+                activeTab === 'mine'
+                  ? 'bg-white text-teal-950 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-teal-900'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5 text-teal-600" />
+              ประกาศของฉัน
+            </button>
           </div>
         </div>
 
@@ -180,11 +211,21 @@ export default function ItemsList() {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-500" />
             <input
               type="text"
-              placeholder="ค้นหาชื่อของ รายละเอียด สถานที่ หรือชื่อผู้ลงประกาศ..."
+              placeholder="ค้นหาชื่อของ รายละเอียด ตัวอักษร หรือคำสำคัญ (เช่น บัตร, ไอโฟน, กุญแจ)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-slate-800 placeholder:text-slate-400"
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-slate-800 placeholder:text-slate-400"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                title="ล้างคำค้นหา"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Category Filter */}
@@ -237,6 +278,27 @@ export default function ItemsList() {
             </button>
           )}
         </div>
+
+        {/* Live Search & Matching Indicator */}
+        {searchTerm && (
+          <div className="mt-3 flex items-center justify-between gap-2 text-xs bg-teal-50 border border-teal-200/80 px-4 py-2.5 rounded-2xl text-teal-900 shadow-2xs">
+            <div className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span className="truncate">
+                กำลังจับคู่ตัวอักษรและคำค้น: <strong className="font-bold underline decoration-teal-400">"{searchTerm}"</strong>
+                <span className="ml-2 font-semibold text-teal-700">
+                  (ค้นพบ {filteredItems.length} รายการที่ตรงกัน)
+                </span>
+              </span>
+            </div>
+            <button
+              onClick={() => setSearchTerm('')}
+              className="text-[11px] font-bold text-teal-700 hover:text-teal-900 bg-teal-100/70 hover:bg-teal-200/70 px-2.5 py-1 rounded-lg transition-colors shrink-0 cursor-pointer"
+            >
+              ล้างคำค้นหา
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Results Header Count */}

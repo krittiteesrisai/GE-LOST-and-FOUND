@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Item } from '../types';
+import { Item, TrackingStage } from '../types';
+import { TrackingProgressBar } from '../components/TrackingProgressBar';
+import { ItemChat } from '../components/ItemChat';
+import { ConfirmResolveModal } from '../components/ConfirmResolveModal';
 import { 
   MapPin, 
   Calendar, 
@@ -23,7 +26,9 @@ import {
   Edit3, 
   ShieldAlert, 
   User as UserIcon,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  RotateCcw
 } from 'lucide-react';
 
 export default function ItemDetail() {
@@ -36,37 +41,44 @@ export default function ItemDetail() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedContact, setCopiedContact] = useState(false);
   const [matchingSuggestions, setMatchingSuggestions] = useState<Item[]>([]);
+  const [showResolveConfirm, setShowResolveConfirm] = useState(false);
   const navigate = useNavigate();
 
   const activeUid = effectiveUser?.uid || user?.uid;
 
+  const lastCategoryRef = useRef<string | null>(null);
+
   useEffect(() => {
-    const fetchItem = async () => {
-      if (!id) return;
-      
-      const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
+    if (!id) return;
+    
+    const myItems = JSON.parse(localStorage.getItem('myItems') || '[]');
+    const docRef = doc(db, 'items', id);
 
-      try {
-        const docRef = doc(db, 'items', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const itemData = { id: docSnap.id, ...docSnap.data() } as Item;
-          setItem(itemData);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const itemData = { id: docSnap.id, ...docSnap.data() } as Item;
+        setItem(itemData);
+
+        // Only fetch suggestions once or if category changes
+        if (lastCategoryRef.current !== itemData.category) {
+          lastCategoryRef.current = itemData.category;
           fetchSuggestions(itemData);
-
-          const isUserAuthor = !!activeUid && !!itemData.authorId && itemData.authorId === activeUid;
-          if (myItems.includes(id) || isAdmin || isUserAuthor) {
-            setIsOwner(true);
-          }
         }
-      } catch (error) {
-        console.error('Error fetching item:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchItem();
+        const isUserAuthor = !!activeUid && !!itemData.authorId && itemData.authorId === activeUid;
+        if (myItems.includes(id) || isAdmin || isUserAuthor) {
+          setIsOwner(true);
+        }
+      } else {
+        setItem(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error listening to item:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [id, user, effectiveUser, activeUid, isAdmin]);
 
   const fetchSuggestions = async (currentItem: Item) => {
@@ -93,13 +105,18 @@ export default function ItemDetail() {
 
   const handleResolve = async () => {
     if (!id || !item) return;
+    // If already resolved and not admin, locked!
+    if (item.status === 'resolved' && !isAdmin) return;
+
     setResolving(true);
     try {
       const newStatus = item.status === 'active' ? 'resolved' : 'active';
+      const newStage = newStatus === 'resolved' ? 'resolved' : 'review';
       await updateDoc(doc(db, 'items', id), {
-        status: newStatus
+        status: newStatus,
+        stage: newStage
       });
-      setItem({ ...item, status: newStatus });
+      setItem({ ...item, status: newStatus, stage: newStage });
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -188,6 +205,16 @@ export default function ItemDetail() {
         </div>
       </div>
 
+      {/* Visual Tracking Progress Bar (Reported -> Under Review -> Lead Found -> Returned) */}
+      <TrackingProgressBar 
+        item={item}
+        isOwner={isOwner}
+        isAdmin={isAdmin}
+        onStatusChange={(newStage, newStatus) => {
+          setItem(prev => prev ? { ...prev, stage: newStage, status: newStatus } : null);
+        }}
+      />
+
       {/* Main Details Card */}
       <div className="bg-white rounded-3xl border border-teal-100 shadow-xs overflow-hidden">
         {/* Status Header Bar */}
@@ -223,21 +250,32 @@ export default function ItemDetail() {
           </div>
 
           {(isOwner || isAdmin) && (
-            <button
-              onClick={handleResolve}
-              disabled={resolving}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
-                isResolved
-                  ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              }`}
-            >
-              {resolving
-                ? 'กำลังอัปเดต...'
-                : isResolved
-                ? 'เปลี่ยนสถานะเป็น "กำลังตามหา"'
-                : 'ทำเครื่องหมายว่า "ส่งคืนสำเร็จแล้ว"'}
-            </button>
+            isResolved ? (
+              isAdmin ? (
+                <button
+                  onClick={handleResolve}
+                  disabled={resolving}
+                  className="px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-slate-200 hover:bg-slate-300 text-slate-800 flex items-center gap-1.5 cursor-pointer"
+                  title="ผู้ดูแลระบบ: ปลดล็อคและเปิดตามหาใหม่"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                  <span>{resolving ? 'กำลังอัปเดต...' : 'เปิดตามหาใหม่ (Admin)'}</span>
+                </button>
+              ) : (
+                <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>ปิดเคสแล้ว (ล็อค)</span>
+                </span>
+              )
+            ) : (
+              <button
+                onClick={() => setShowResolveConfirm(true)}
+                disabled={resolving}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              >
+                {resolving ? 'กำลังอัปเดต...' : 'ทำเครื่องหมายว่า "ส่งคืนสำเร็จแล้ว"'}
+              </button>
+            )
           )}
         </div>
 
@@ -392,6 +430,15 @@ export default function ItemDetail() {
         </div>
       </div>
 
+      {/* Real-time Post Chat / Lead Discussion */}
+      <ItemChat 
+        item={item} 
+        isOwner={isOwner} 
+        onStageAutoAdvance={() => {
+          setItem(prev => prev ? { ...prev, stage: 'contacted' } : null);
+        }}
+      />
+
       {/* Suggested Matching Items */}
       {matchingSuggestions.length > 0 && (
         <div className="pt-6 space-y-4">
@@ -430,6 +477,18 @@ export default function ItemDetail() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal before permanent lock */}
+      <ConfirmResolveModal
+        isOpen={showResolveConfirm}
+        onClose={() => setShowResolveConfirm(false)}
+        onConfirm={async () => {
+          await handleResolve();
+          setShowResolveConfirm(false);
+        }}
+        item={item}
+        loading={resolving}
+      />
     </div>
   );
 }

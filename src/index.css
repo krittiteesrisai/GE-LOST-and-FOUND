@@ -26,3 +26,28 @@
 .teal-gradient-hero {
   background: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f0fdf9 45%, #e6f9f6 85%, #d1f4ed 100%);
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.22s ease-out forwards;
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}

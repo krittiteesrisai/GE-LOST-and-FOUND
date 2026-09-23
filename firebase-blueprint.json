@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Item": {
+      "title": "Item",
+      "description": "Lost or found item report",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the item" },
+        "category": { "type": "string", "description": "Category of the item" },
+        "description": { "type": "string", "description": "Detailed description" },
+        "location": { "type": "string", "description": "Location lost or found" },
+        "date": { "type": "string", "description": "Date lost or found" },
+        "contact": { "type": "string", "description": "Contact info" },
+        "type": { "type": "string", "enum": ["lost", "found"], "description": "Item type" },
+        "status": { "type": "string", "enum": ["active", "resolved"], "description": "Status" },
+        "stage": { "type": "string", "enum": ["reported", "review", "lead", "resolved"], "description": "Current tracking stage" },
+        "imageUrl": { "type": "string", "description": "Image URL or data URI" },
+        "authorId": { "type": "string", "description": "UID of author" },
+        "authorName": { "type": "string", "description": "Name of author" },
+        "authorEmail": { "type": "string", "description": "Email of author" },
+        "isGuest": { "type": "boolean", "description": "Whether posted as guest" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp" }
+      },
+      "required": ["title", "category", "description", "location", "date", "contact", "type"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat message on a specific lost/found item post",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "description": "ID of the item document" },
+        "text": { "type": "string", "description": "Message content", "maxLength": 1000 },
+        "authorId": { "type": "string", "description": "UID of commenter" },
+        "authorName": { "type": "string", "description": "Display name of sender" },
+        "authorAvatar": { "type": "string", "description": "Sender avatar URL" },
+        "isOwner": { "type": "boolean", "description": "Whether sender is post author" },
+        "isAdmin": { "type": "boolean", "description": "Whether sender is an admin" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp created" }
+      },
+      "required": ["text", "authorName"]
+    }
+  },
+  "firestore": {
+    "/items/{itemId}": {
+      "schema": "Item",
+      "description": "Collection of lost and found items"
+    },
+    "/items/{itemId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Real-time chat messages and lead discussions for an item"
+    }
+  }
+}

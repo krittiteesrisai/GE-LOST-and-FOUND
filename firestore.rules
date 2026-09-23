@@ -21,15 +21,19 @@ service cloud.firestore {
                     && request.resource.data.type is string && request.resource.data.type.trim() != '';
                     
       // 3. อนุญาตให้ทุกคน update ได้ภายใต้เงื่อนไขข้อมูล (เนื่องจากเราถอยกลับมาใช้ Client-side Admin Auth)
-      allow update: if request.resource.data.title is string && request.resource.data.title.trim() != ''
-                    && request.resource.data.category is string && request.resource.data.category.trim() != ''
-                    && request.resource.data.description is string && request.resource.data.description.trim() != ''
-                    && request.resource.data.location is string && request.resource.data.location.trim() != ''
-                    && request.resource.data.date is string && request.resource.data.date.trim() != ''
-                    && request.resource.data.contact is string && request.resource.data.contact.trim() != '';
+      allow update: if true;
       
       // 4. อนุญาตให้ทุกคน delete ได้ (เนื่องจากเราถอยกลับมาใช้ Client-side Admin Auth)
       allow delete: if true;
+
+      // 5. Chat Messages ในแต่ละประกาศ (สำหรับพูดคุยแจ้งเบาะแส)
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if request.resource.data.text is string 
+                      && request.resource.data.text.trim() != ''
+                      && request.resource.data.authorName is string;
+        allow update, delete: if true;
+      }
     }
   }
 }

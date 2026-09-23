@@ -2,6 +2,7 @@ import { Timestamp } from 'firebase/firestore';
 
 export type ItemType = 'lost' | 'found';
 export type ItemStatus = 'active' | 'resolved';
+export type TrackingStage = 'reported' | 'review' | 'contacted' | 'resolved';
 
 export const CATEGORIES = [
   'บัตรนักศึกษา/บัตรประจำตัว',
@@ -25,6 +26,7 @@ export interface Item {
   contact?: string; // Contact info (phone/line/email) - wait, it is required for lost, maybe for found too
   imageUrl?: string; // base64 or URL
   status: ItemStatus;
+  stage?: TrackingStage; // Tracking stage: reported -> review -> contacted -> resolved
   adminNote?: string; // For admins to leave a note
   createdAt?: any;
   authorName?: string; // e.g. "Guest" or "กฤตติพงศ์"
@@ -32,3 +34,17 @@ export interface Item {
   authorId?: string; // uid if logged in, or 'guest'
   isGuest?: boolean;
 }
+
+export interface ChatMessage {
+  id: string;
+  itemId: string;
+  text: string;
+  authorName: string;
+  authorId?: string;
+  authorEmail?: string;
+  authorAvatar?: string;
+  isOwner?: boolean;
+  isAdmin?: boolean;
+  createdAt: any;
+}
+
