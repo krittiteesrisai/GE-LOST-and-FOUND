@@ -70,21 +70,21 @@ export default function MyPosts() {
         <div>
           <Link 
             to="/" 
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 mb-2 transition-all duration-150 active:scale-95 group"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-amber-900 mb-2 transition-all duration-150 active:scale-95 group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             <span>กลับสู่หน้าแรก</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-2xl bg-teal-600 text-white shadow-xs">
-              <Package className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-2xl bg-amber-900 text-amber-100 shadow-xs border border-amber-700">
+              <Package className="w-5 h-5 text-amber-300" />
             </span>
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                ติดตามประกาศของฉัน
+              <h1 className="font-western text-xl sm:text-2xl font-black text-stone-900 tracking-wide">
+                ★ ป้ายประกาศของฉัน (My Posters)
               </h1>
-              <p className="text-xs text-slate-500">
-                รายการสิ่งของที่คุณเคยลงประกาศไว้ ติดตามสถานะและปรับปรุงข้อมูลได้ทันที
+              <p className="text-xs text-stone-600 font-medium">
+                รายการของที่คุณเคยปักป้ายไว้ในเมือง ติดตามตั๋ว ID และสถานะการส่งคืน
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function MyPosts() {
           <button
             onClick={refresh}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#fefdfa] border-2 border-amber-900/20 text-stone-800 rounded-xl hover:bg-amber-100/50 active:scale-95 transition-all shadow-2xs cursor-pointer"
             title="รีเฟรชข้อมูล"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -103,50 +103,50 @@ export default function MyPosts() {
 
           <Link
             to="/report/lost"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl active:scale-95 transition-all shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-gradient-to-r from-amber-800 to-stone-900 hover:from-amber-900 hover:to-black text-amber-50 rounded-xl active:scale-95 transition-all shadow-xs border border-amber-700/50"
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>ลงประกาศใหม่</span>
+            <PlusCircle className="w-4 h-4 text-amber-300" />
+            <span>+ ปักป้ายใหม่</span>
           </Link>
         </div>
       </div>
 
-      {/* Stats and Filter Header */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Unified Tally Filter Strip - Wild West */}
+      <div className="bg-[#fdfaf2] rounded-2xl border-2 border-amber-900/30 shadow-2xs overflow-hidden grid grid-cols-3 divide-x divide-amber-900/20">
         <button
           onClick={() => setFilter('all')}
-          className={`p-3.5 rounded-2xl border text-left transition-all duration-150 active:scale-95 cursor-pointer ${
+          className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'all' 
-              ? 'bg-white border-teal-500 ring-2 ring-teal-100 shadow-xs' 
-              : 'bg-white border-slate-200 hover:border-slate-300'
+              ? 'bg-white shadow-inner border-b-2 border-amber-900' 
+              : 'hover:bg-amber-100/40'
           }`}
         >
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ทั้งหมด</span>
-          <div className="text-2xl font-extrabold text-slate-900 mt-0.5">{totalCount}</div>
+          <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block">ทั้งหมด</span>
+          <div className="font-display font-black text-2xl text-stone-900 mt-0.5 tabular-nums">{totalCount}</div>
         </button>
 
         <button
           onClick={() => setFilter('active')}
-          className={`p-3.5 rounded-2xl border text-left transition-all duration-150 active:scale-95 cursor-pointer ${
+          className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'active' 
-              ? 'bg-amber-50/60 border-amber-500 ring-2 ring-amber-100 shadow-xs' 
-              : 'bg-white border-slate-200 hover:border-amber-200'
+              ? 'bg-rose-50/80 shadow-inner border-b-2 border-rose-800' 
+              : 'hover:bg-rose-50/40'
           }`}
         >
-          <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">กำลังตามหา</span>
-          <div className="text-2xl font-extrabold text-amber-700 mt-0.5">{activeCount}</div>
+          <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">★ กำลังตามหา</span>
+          <div className="font-display font-black text-2xl text-rose-950 mt-0.5 tabular-nums">{activeCount}</div>
         </button>
 
         <button
           onClick={() => setFilter('resolved')}
-          className={`p-3.5 rounded-2xl border text-left transition-all duration-150 active:scale-95 cursor-pointer ${
+          className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'resolved' 
-              ? 'bg-teal-50/60 border-teal-500 ring-2 ring-teal-100 shadow-xs' 
-              : 'bg-white border-slate-200 hover:border-teal-200'
+              ? 'bg-emerald-50/80 shadow-inner border-b-2 border-emerald-800' 
+              : 'hover:bg-emerald-50/40'
           }`}
         >
-          <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider">ส่งคืนสำเร็จ</span>
-          <div className="text-2xl font-extrabold text-teal-700 mt-0.5">{resolvedCount}</div>
+          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">✓ ส่งคืนสำเร็จ</span>
+          <div className="font-display font-black text-2xl text-emerald-950 mt-0.5 tabular-nums">{resolvedCount}</div>
         </button>
       </div>
 
@@ -199,17 +199,18 @@ export default function MyPosts() {
           {filteredItems.map(item => {
             const isResolved = item.status === 'resolved';
             const isLost = item.type === 'lost';
+            const ticketCode = `TKT-${(item.id || '').slice(0, 6).toUpperCase()}`;
 
             return (
               <div 
                 key={item.id}
-                className="bg-white rounded-3xl border border-slate-200/90 hover:border-teal-300 p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row gap-4 sm:items-center justify-between"
+                className="bg-[#fffdfa] rounded-2xl border border-stone-300 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between overflow-hidden"
               >
                 {/* Left: Thumbnail & Info */}
-                <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                <div className="flex items-start gap-4 p-4 sm:p-5 flex-1 min-w-0">
                   <div 
                     onClick={() => navigate(`/item/${item.id}`)}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 cursor-pointer relative group"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-200 cursor-pointer relative group"
                   >
                     {item.imageUrl ? (
                       <img 
@@ -218,83 +219,93 @@ export default function MyPosts() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold bg-slate-50">
+                      <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs font-bold bg-stone-50">
                         {isLost ? 'ของหาย' : 'พบของ'}
+                      </div>
+                    )}
+
+                    {isResolved && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none p-1">
+                        <div className="stamp-ink-double border-emerald-800 text-emerald-950 bg-emerald-50/95 text-[9px] font-black px-1.5 py-0.5 transform -rotate-6">
+                          RETURNED
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        isLost ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-teal-50 text-teal-700 border border-teal-200'
-                      }`}>
-                        {isLost ? 'ตามหาของ' : 'พบของ'}
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Ticket Code in Monospace */}
+                      <span className="font-mono text-[11px] font-bold text-stone-600 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded">
+                        {ticketCode}
                       </span>
 
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        isResolved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isResolved ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-                        <span>{isResolved ? 'ส่งคืนสำเร็จแล้ว' : 'กำลังตามหา / ยังไม่ได้รับคืน'}</span>
-                      </span>
+                      {/* Rubber Stamp Status */}
+                      {isResolved ? (
+                        <span className="stamp-ink-double border-emerald-800 text-emerald-900 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold">
+                          ✓ ได้รับคืนแล้ว
+                        </span>
+                      ) : isLost ? (
+                        <span className="stamp-ink border-amber-800 text-amber-900 bg-amber-50 px-2 py-0.5 text-[10px] font-bold">
+                          กำลังตามหา
+                        </span>
+                      ) : (
+                        <span className="stamp-ink border-teal-800 text-teal-900 bg-teal-50 px-2 py-0.5 text-[10px] font-bold">
+                          รับแจ้งพบ
+                        </span>
+                      )}
 
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {item.category}
+                      <span className="text-[11px] text-stone-500 font-medium">
+                        หมวดหมู่: {item.category}
                       </span>
                     </div>
 
                     <h3 
                       onClick={() => navigate(`/item/${item.id}`)}
-                      className="font-bold text-slate-900 text-sm sm:text-base hover:text-teal-700 cursor-pointer truncate"
+                      className="font-display font-bold text-slate-900 text-base sm:text-lg hover:text-teal-800 cursor-pointer truncate"
                     >
                       {item.title}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-500 pt-0.5">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-teal-600" />
-                        <span className="truncate max-w-[150px]">{item.location}</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{item.date}</span>
-                      </span>
+                    {/* 2-line meta without middle dots */}
+                    <div className="space-y-1 text-xs text-stone-600 pt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                        <span className="truncate max-w-[200px]">{item.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-stone-500 text-[11px]">
+                        <Calendar className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                        <span>บันทึกเมื่อ: {item.date}</span>
+                      </div>
                     </div>
-
-                    {item.description && (
-                      <p className="text-xs text-slate-400 line-clamp-1">
-                        {item.description}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                {/* Right: Instant Actions */}
-                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
+                {/* Right: Actions */}
+                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 p-4 sm:p-5 bg-stone-50/70 border-t sm:border-t-0 sm:border-l border-dashed border-stone-300 shrink-0">
                   {/* Status Toggle Button */}
                   {isResolved ? (
                     isAdmin ? (
                       <button
                         onClick={() => handleToggle(item.id!, item.status)}
                         disabled={updatingId === item.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-90 cursor-pointer shadow-2xs bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-90 cursor-pointer shadow-2xs bg-stone-200 hover:bg-stone-300 text-stone-800"
                         title="แอดมิน: เปิดตามหาใหม่"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                        <RotateCcw className="w-3.5 h-3.5 text-stone-600" />
                         <span>เปิดตามหาใหม่ (Admin)</span>
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-                        <Lock className="w-3 h-3 text-slate-400" />
-                        <span>ส่งคืนแล้ว (ปิดเคส)</span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-stone-100 text-stone-500 border border-stone-200">
+                        <Lock className="w-3 h-3 text-stone-400" />
+                        <span>ปิดเคสแล้ว</span>
                       </span>
                     )
                   ) : (
                     <button
                       onClick={() => setItemToResolve(item)}
                       disabled={updatingId === item.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-90 cursor-pointer shadow-2xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer shadow-2xs bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>ได้ของคืนแล้ว</span>
@@ -304,7 +315,7 @@ export default function MyPosts() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => navigate(`/item/${item.id}`)}
-                      className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-teal-700 hover:bg-slate-50 active:scale-90 transition-all"
+                      className="p-2 rounded-xl border border-stone-200 bg-white text-stone-600 hover:text-teal-700 hover:bg-stone-50 active:scale-90 transition-all cursor-pointer"
                       title="ดูรายละเอียด"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -312,7 +323,7 @@ export default function MyPosts() {
 
                     <button
                       onClick={() => navigate(`/edit/${item.id}`)}
-                      className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-teal-700 hover:bg-slate-50 active:scale-90 transition-all"
+                      className="p-2 rounded-xl border border-stone-200 bg-white text-stone-600 hover:text-teal-700 hover:bg-stone-50 active:scale-90 transition-all cursor-pointer"
                       title="แก้ไขประกาศ"
                     >
                       <Edit3 className="w-3.5 h-3.5" />

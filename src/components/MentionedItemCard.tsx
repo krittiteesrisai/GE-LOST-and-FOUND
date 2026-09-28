@@ -32,14 +32,20 @@ export function MentionedItemCard({ item, onRemove, isCompact = false }: Mention
           <div className="min-w-0">
             {/* Badges */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={`px-2 py-0.2 rounded-md text-[10px] font-bold ${
-                isLost ? 'bg-amber-500 text-white' : 'bg-teal-600 text-white'
-              }`}>
-                {isLost ? 'ของหาย' : 'พบของ'}
+              <span className="font-mono text-[10px] font-bold text-stone-600 bg-white border border-stone-200 px-1.5 py-0.2 rounded">
+                TKT-{(item.id || '').slice(0, 6).toUpperCase()}
               </span>
-              {isResolved && (
-                <span className="px-2 py-0.2 rounded-md text-[10px] font-bold bg-emerald-600 text-white">
-                  ส่งคืนแล้ว
+              {isResolved ? (
+                <span className="stamp-ink-double border-emerald-800 text-emerald-900 bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold">
+                  ✓ ส่งคืนแล้ว
+                </span>
+              ) : isLost ? (
+                <span className="stamp-ink border-amber-800 text-amber-900 bg-amber-50 px-1.5 py-0.2 text-[9px] font-bold">
+                  กำลังตามหา
+                </span>
+              ) : (
+                <span className="stamp-ink border-teal-800 text-teal-900 bg-teal-50 px-1.5 py-0.2 text-[9px] font-bold">
+                  รับแจ้งพบ
                 </span>
               )}
               <span className="text-[10px] text-slate-500 font-semibold truncate flex items-center gap-1">
@@ -49,21 +55,20 @@ export function MentionedItemCard({ item, onRemove, isCompact = false }: Mention
             </div>
 
             {/* Title */}
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-0.5">
+            <h4 className="font-display text-xs sm:text-sm font-bold text-slate-900 truncate mt-0.5">
               {item.title}
             </h4>
 
-            {/* Location & Date */}
-            <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
-              <span className="flex items-center gap-1 truncate">
-                <MapPin className="w-3 h-3 text-slate-400" />
-                {item.location}
-              </span>
-              <span>·</span>
-              <span className="flex items-center gap-1 truncate">
-                <Calendar className="w-3 h-3 text-slate-400" />
-                {item.date}
-              </span>
+            {/* Location & Date (2 distinct lines, no middle dot) */}
+            <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 space-y-0.5">
+              <div className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 text-teal-600 shrink-0" />
+                <span className="truncate">{item.location}</span>
+              </div>
+              <div className="flex items-center gap-1 truncate text-slate-400">
+                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>{item.date}</span>
+              </div>
             </div>
           </div>
         </div>

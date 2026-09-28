@@ -63,6 +63,15 @@ export default function Admin() {
     }
     fetchData();
 
+    // Listen to items in real-time
+    const qItems = query(collection(db, 'items'), orderBy('createdAt', 'desc'));
+    const unsubscribeItems = onSnapshot(qItems, (snapshot) => {
+      const itemsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Item));
+      setItems(itemsData);
+    }, (err) => {
+      console.warn('Realtime items listener notice:', err);
+    });
+
     // Listen to support chats in real-time
     const qSupport = query(collection(db, 'support_chats'), orderBy('lastMessageAt', 'desc'));
     const unsubscribeSupport = onSnapshot(qSupport, (snapshot) => {
@@ -71,9 +80,14 @@ export default function Admin() {
         ...d.data()
       } as SupportChat));
       setSupportChats(chats);
+    }, (err) => {
+      console.warn('Realtime support listener notice:', err);
     });
 
-    return () => unsubscribeSupport();
+    return () => {
+      unsubscribeItems();
+      unsubscribeSupport();
+    };
   }, [navigate]);
 
   const fetchData = async () => {
@@ -200,7 +214,8 @@ export default function Admin() {
   };
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = `${item.title} ${item.contact} ${item.location} ${item.authorEmail || ''} ${item.authorName || ''}`.toLowerCase().includes(searchQuery.toLowerCase());
+    const ticketCode = `TKT-${(item.id || '').slice(0, 6).toUpperCase()}`;
+    const matchesSearch = `${item.title} ${ticketCode} ${item.id || ''} ${item.contact} ${item.location} ${item.authorEmail || ''} ${item.authorName || ''}`.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' ? true : item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -227,15 +242,20 @@ export default function Admin() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* Header - Wild West Sheriff Office */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-teal-800 text-white shadow-xs">
-            <ShieldCheck className="w-4 h-4 text-cyan-300" />
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-gradient-to-br from-amber-700 to-amber-950 text-amber-200 border border-amber-600 shadow-xs">
+            <ShieldCheck className="w-5 h-5 text-amber-300" />
           </span>
-          <h1 className="text-xl font-extrabold text-slate-900">
-            ระบบจัดการ (Staff Portal)
-          </h1>
+          <div>
+            <h1 className="font-western text-xl sm:text-2xl font-black text-stone-900 tracking-wide flex items-center gap-2">
+              <span>★ สำนักงานนายอำเภอ (Sheriff & Marshal Office)</span>
+            </h1>
+            <p className="text-xs text-stone-600 font-medium">
+              ศูนย์ควบคุมคดีทรัพย์สิน จัดการตั๋ว ID และโทรเลขสื่อสารของเมือง
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -318,7 +338,7 @@ export default function Admin() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="ค้นหาชื่อ, สถานที่, ผู้ติดต่อ, อีเมล..."
+                placeholder="ค้นหาตั๋ว ID (TKT-...), ชื่อสิ่งของ, สถานที่, ผู้ติดต่อ, อีเมล..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
@@ -362,6 +382,7 @@ export default function Admin() {
                 <table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-100">
                     <tr>
+                      <th className="px-4 py-3">ตั๋ว ID</th>
                       <th className="px-4 py-3">รายการ</th>
                       <th className="px-3 py-3">ประเภท</th>
                       <th className="px-3 py-3">ผู้ติดต่อ</th>
@@ -370,58 +391,71 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredItems.map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
-                              {item.imageUrl ? (
-                                <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-[9px] text-slate-400 font-bold">
-                                  -
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <div 
-                                onClick={() => navigate(`/item/${item.id}`)}
-                                className="font-bold text-slate-900 hover:text-teal-600 cursor-pointer line-clamp-1 max-w-[180px]"
-                              >
-                                {item.title}
+                    {filteredItems.map(item => {
+                      const ticketCode = `TKT-${(item.id || '').slice(0, 6).toUpperCase()}`;
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                          {/* Claim Ticket Code in Monospace */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="font-mono text-xs font-bold text-stone-800 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded">
+                              {ticketCode}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-[9px] text-slate-400 font-bold">
+                                    -
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-[10px] text-slate-400">{item.location}</div>
+                              <div>
+                                <div 
+                                  onClick={() => navigate(`/item/${item.id}`)}
+                                  className="font-bold text-slate-900 hover:text-teal-600 cursor-pointer line-clamp-1 max-w-[180px]"
+                                >
+                                  {item.title}
+                                </div>
+                                <div className="text-[10px] text-slate-400">{item.location}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            item.type === 'lost' 
-                              ? 'bg-orange-50 text-orange-700 border border-orange-200' 
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}>
-                            {item.type === 'lost' ? 'ของหาย' : 'พบของ'}
-                          </span>
-                        </td>
+                          <td className="px-3 py-3">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              item.type === 'lost' 
+                                ? 'bg-orange-50 text-orange-700 border border-orange-200' 
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              {item.type === 'lost' ? 'ของหาย' : 'พบของ'}
+                            </span>
+                          </td>
 
-                        <td className="px-3 py-3">
-                          <div className="font-mono text-slate-800">{item.contact}</div>
-                          {item.authorEmail && (
-                            <div className="text-[10px] text-slate-400">{item.authorEmail}</div>
-                          )}
-                        </td>
+                          <td className="px-3 py-3">
+                            <div className="font-mono text-slate-800">{item.contact}</div>
+                            {item.authorEmail && (
+                              <div className="text-[10px] text-slate-400">{item.authorEmail}</div>
+                            )}
+                          </td>
 
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            item.status === 'resolved' 
-                              ? 'bg-emerald-50 text-emerald-700' 
-                              : 'bg-amber-50 text-amber-700'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'resolved' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                            <span>{item.status === 'resolved' ? 'คืนแล้ว' : 'ยังไม่คืน'}</span>
-                          </span>
-                        </td>
+                          <td className="px-3 py-3">
+                            {item.status === 'resolved' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>คืนแล้ว</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                <span>ยังไม่คืน</span>
+                              </span>
+                            )}
+                          </td>
 
                         <td className="px-4 py-3 text-right space-x-1 whitespace-nowrap">
                           {item.status !== 'resolved' ? (
@@ -455,11 +489,11 @@ export default function Admin() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    ); })}
 
                     {filteredItems.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400 text-xs">
+                        <td colSpan={6} className="px-4 py-8 text-center text-slate-400 text-xs">
                           ไม่พบรายการ
                         </td>
                       </tr>

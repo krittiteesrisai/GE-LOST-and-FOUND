@@ -27,6 +27,7 @@ export interface Item {
   imageUrl?: string; // base64 or URL
   status: ItemStatus;
   stage?: TrackingStage; // Tracking stage: reported -> review -> contacted -> resolved
+  reward?: number; // Bounty / reward amount in Baht (for wanted lost items)
   adminNote?: string; // For admins to leave a note
   createdAt?: any;
   authorName?: string; // e.g. "Guest" or "กฤตติพงศ์"

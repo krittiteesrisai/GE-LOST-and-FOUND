@@ -8,19 +8,11 @@ import {
   Search, 
   MapPin, 
   ArrowUpDown, 
-  Smartphone, 
-  CreditCard, 
-  Key, 
-  Backpack, 
-  Glasses, 
-  HelpCircle, 
-  User, 
-  Check, 
-  Plus,
   Package,
   X
 } from 'lucide-react';
 import { matchItemWithSearch } from '../utils/searchMatcher';
+import { ClaimTicketCard } from '../components/ClaimTicketCard';
 
 export default function ItemsList() {
   const { user, effectiveUser } = useAuth();
@@ -142,108 +134,95 @@ export default function ItemsList() {
 
   const hasActiveFilters = activeTab !== 'all' || !!searchTerm || !!selectedCategory || !!selectedLocation;
 
-  const getCategoryIcon = (cat: string) => {
-    switch (cat) {
-      case 'อุปกรณ์อิเล็กทรอนิกส์':
-        return <Smartphone className="w-6 h-6 text-teal-600" />;
-      case 'เอกสาร/บัตร':
-        return <CreditCard className="w-6 h-6 text-cyan-600" />;
-      case 'กุญแจ':
-        return <Key className="w-6 h-6 text-emerald-600" />;
-      case 'กระเป๋า':
-        return <Backpack className="w-6 h-6 text-indigo-600" />;
-      case 'แว่นตา':
-        return <Glasses className="w-6 h-6 text-sky-600" />;
-      default:
-        return <HelpCircle className="w-6 h-6 text-slate-400" />;
-    }
-  };
-
   return (
     <div className="space-y-8">
       {/* Header & Segmented Tabs */}
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">Directory</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              ศูนย์รวมรายการสิ่งของ
+            <div className="inline-flex items-center gap-1 text-[11px] font-western text-amber-900 font-bold uppercase tracking-wider mb-1">
+              <span>★</span>
+              <span>FRONTIER BOUNTY & NOTICE BOARD</span>
+              <span>★</span>
+            </div>
+            <h1 className="font-western text-2xl sm:text-3xl font-black tracking-wide text-stone-900">
+              กระดานประกาศแดนคาวบอย
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              ค้นหาทรัพย์สินที่สูญหาย หรือตรวจสอบรายการที่มีผู้เก็บได้และนำมาส่งมอบ
+            <p className="text-xs sm:text-sm text-stone-600 mt-1 font-medium">
+              ตรวจสอบรายการประกาศตามล่าของหาย (Wanted) หรือทรัพย์สินที่ฝากไว้กับนายอำเภอ
             </p>
           </div>
 
-          {/* Segmented Control Switcher */}
-          <div className="inline-flex bg-teal-50/80 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-teal-100 flex-wrap">
+          {/* Segmented Control Switcher - Wild West */}
+          <div className="inline-flex bg-[#f2e7d5] p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border-2 border-amber-900/25 flex-wrap gap-1">
             <button
               onClick={() => handleTabChange('all')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'all'
-                  ? 'bg-white text-teal-950 shadow-xs'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-white text-stone-900 shadow-xs font-black'
+                  : 'text-stone-700 hover:text-stone-950'
               }`}
             >
               ทั้งหมด
             </button>
             <button
               onClick={() => handleTabChange('lost')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'lost'
-                  ? 'bg-white text-amber-600 shadow-xs'
-                  : 'text-slate-600 hover:text-amber-700'
+                  ? 'bg-rose-900 text-rose-50 shadow-xs font-black'
+                  : 'text-rose-900 hover:bg-rose-100/50'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              ตามหาของ
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+              ★ ตามล่า (WANTED)
             </button>
             <button
               onClick={() => handleTabChange('found')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'found'
-                  ? 'bg-white text-teal-700 shadow-xs'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-amber-900 text-amber-100 shadow-xs font-black'
+                  : 'text-amber-950 hover:bg-amber-100/50'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-teal-600" />
-              พบของ
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              ★ ฝากอำเภอ (FOUND)
             </button>
             <button
               onClick={() => handleTabChange('resolved')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'resolved'
-                  ? 'bg-white text-emerald-700 shadow-xs'
-                  : 'text-slate-600 hover:text-emerald-700'
+                  ? 'bg-emerald-900 text-emerald-100 shadow-xs font-black'
+                  : 'text-emerald-900 hover:bg-emerald-100/50'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              ส่งคืนแล้ว
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              ✓ คืนแล้ว
             </button>
             <button
               onClick={() => handleTabChange('mine')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'mine'
-                  ? 'bg-white text-teal-950 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-stone-900 text-amber-200 shadow-xs font-black'
+                  : 'text-stone-700 hover:text-stone-950'
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-teal-600" />
-              ประกาศของฉัน
+              <Package className="w-3.5 h-3.5 text-amber-600" />
+              ของฉัน
             </button>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white p-4 rounded-3xl border border-teal-100/80 shadow-xs flex flex-col md:flex-row gap-3">
+        <div className="bg-[#fefdfa] p-4 rounded-3xl border-2 border-amber-900/20 shadow-xs flex flex-col md:flex-row gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-500" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-800" />
             <input
               type="text"
-              placeholder="ค้นหาชื่อของ รายละเอียด ตัวอักษร หรือคำสำคัญ (เช่น บัตร, ไอโฟน, กุญแจ)..."
+              placeholder="ค้นหาตั๋ว ID, ชื่อของ, หรือคีย์เวิร์ดสำคัญ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-slate-800 placeholder:text-slate-400"
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-amber-900/20 bg-stone-50/50 focus:bg-white focus:ring-2 focus:ring-amber-700 focus:border-amber-800 outline-none text-stone-900 placeholder:text-stone-400 font-medium"
             />
             {searchTerm && (
               <button
@@ -368,90 +347,9 @@ export default function ItemsList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filteredItems.map((item) => {
-            const isLost = item.type === 'lost';
-            const isResolved = item.status === 'resolved';
-
-            return (
-              <div 
-                key={item.id} 
-                onClick={() => navigate(`/item/${item.id}`)}
-                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden cursor-pointer hover:shadow-lg hover:border-teal-200 hover:-translate-y-0.5 transition-all group flex flex-col"
-              >
-                {/* Visual Thumbnail */}
-                <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden">
-                  {item.imageUrl ? (
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.title} 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fcfb] to-[#eef9f6] text-teal-600 p-4 text-center">
-                      <div className="p-3.5 rounded-2xl bg-white shadow-xs border border-teal-100/80 mb-2">
-                        {getCategoryIcon(item.category)}
-                      </div>
-                      <span className="text-xs text-slate-400 font-medium">รูปถ่ายไม่ระบุ</span>
-                    </div>
-                  )}
-
-                  {/* Status Badge */}
-                  <div className="absolute top-3 left-3">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide backdrop-blur-md shadow-xs ${
-                      isLost 
-                        ? 'bg-amber-500/90 text-white' 
-                        : 'bg-teal-600/90 text-white'
-                    }`}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      {isLost ? 'ตามหาของ' : 'พบของ'}
-                    </span>
-                  </div>
-
-                  {isResolved && (
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3 text-center">
-                      <span className="bg-white text-emerald-800 px-4 py-1.5 rounded-full text-xs font-extrabold shadow-lg flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5 text-emerald-600" /> ได้รับคืนแล้ว
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Body Content */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col">
-                  {/* Metadata line */}
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1.5">
-                    <span className="font-semibold text-teal-700">{item.category}</span>
-                    <span aria-hidden="true" className="text-slate-300">·</span>
-                    <span>
-                      {new Date(item.date).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 mb-1.5 group-hover:text-teal-700 transition-colors">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed font-normal">
-                    {item.description}
-                  </p>
-
-                  <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                    <div className="flex items-center gap-1.5 truncate max-w-[130px]">
-                      <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                      <span className="truncate">{item.type === 'lost' ? item.location : item.currentLocation || item.location}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] font-medium shrink-0">
-                      <User className="w-3 h-3 text-slate-400" />
-                      <span className="font-bold text-slate-700 truncate max-w-[90px]" title={item.authorName || 'Guest'}>
-                        {item.authorName || 'Guest'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {filteredItems.map((item) => (
+            <ClaimTicketCard key={item.id} item={item} />
+          ))}
         </div>
       )}
     </div>

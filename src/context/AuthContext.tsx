@@ -40,6 +40,7 @@ interface AuthContextType {
   loginWithEmailSimulated: (email: string, pass: string, name?: string) => Promise<void>;
   loginAsAdmin: (password: string) => boolean;
   logout: () => Promise<void>;
+  updateUserProfile: (displayName: string, photoURL?: string) => Promise<void>;
   deleteCurrentAccount: () => Promise<void>;
   deleteUserRecord: (uid: string, email?: string) => Promise<void>;
 }
@@ -284,6 +285,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (newDisplayName: string, newPhotoURL?: string) => {
+    const trimmedName = newDisplayName.trim() || 'ผู้ใช้งาน';
+    const photo = newPhotoURL !== undefined ? newPhotoURL : (activeUser?.photoURL || '');
+
+    // 1. If logged in with Firebase User
+    if (user) {
+      try {
+        await updateProfile(user, {
+          displayName: trimmedName,
+          photoURL: photo || null
+        });
+        setUser({
+          ...user,
+          displayName: trimmedName,
+          photoURL: photo || null
+        } as User);
+      } catch (e) {
+        console.warn('Firebase updateProfile warning:', e);
+      }
+    }
+
+    // 2. If customProfile or local account
+    if (customProfile) {
+      const updated: AuthProfile = {
+        ...customProfile,
+        displayName: trimmedName,
+        photoURL: photo || null
+      };
+      setCustomProfile(updated);
+      localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(updated));
+
+      try {
+        const storedUsers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_USERS_KEY) || '[]');
+        const userIdx = storedUsers.findIndex((u: any) => u.uid === customProfile.uid || u.email === customProfile.email);
+        if (userIdx !== -1) {
+          storedUsers[userIdx].displayName = trimmedName;
+          storedUsers[userIdx].photoURL = photo || null;
+          localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(storedUsers));
+        }
+      } catch {}
+    }
+
+    // 3. Sync to Firestore
+    const uid = user?.uid || customProfile?.uid;
+    const email = user?.email || customProfile?.email;
+    if (uid) {
+      await syncUserProfileToFirestore({
+        uid,
+        email: email || '',
+        displayName: trimmedName,
+        photoURL: photo || null,
+        provider: user?.providerData?.[0]?.providerId === 'google.com' ? 'google' : 'email'
+      });
+    }
+  };
+
   const deleteUserRecord = async (uid: string, email?: string) => {
     try {
       if (uid) {
@@ -361,6 +418,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithEmailSimulated,
         loginAsAdmin,
         logout,
+        updateUserProfile,
         deleteCurrentAccount,
         deleteUserRecord
       }}

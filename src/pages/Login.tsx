@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -14,8 +14,18 @@ import {
   Eye, 
   EyeOff,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Camera,
+  Upload,
+  Sparkles,
+  Check
 } from 'lucide-react';
+
+const AVATAR_PRESETS = ['🎒', '🎓', '🦊', '🐱', '🐼', '🦁', '🐻', '🦉', '⚡', '🌟', '🎨', '🚀'];
+
+const createEmojiAvatar = (emoji: string) => {
+  return `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2280%22>${emoji}</text></svg>`;
+};
 
 export default function Login() {
   const { 
@@ -27,6 +37,7 @@ export default function Login() {
     registerWithEmail, 
     loginAsAdmin, 
     logout,
+    updateUserProfile,
     deleteCurrentAccount
   } = useAuth();
   
@@ -168,53 +179,331 @@ export default function Login() {
   const currentUser = effectiveUser || (user ? {
     displayName: user.displayName || user.email?.split('@')[0],
     email: user.email,
+    photoURL: user.photoURL || undefined
   } : null);
+
+  // Profile Edit State
+  const [editName, setEditName] = useState(currentUser?.displayName || '');
+  const [editPhoto, setEditPhoto] = useState(currentUser?.photoURL || '');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [showCustomUrl, setShowCustomUrl] = useState(false);
+
+  // Sync profile editing fields when currentUser updates
+  useEffect(() => {
+    if (currentUser) {
+      setEditName(currentUser.displayName || '');
+      setEditPhoto(currentUser.photoURL || '');
+    }
+  }, [currentUser?.displayName, currentUser?.photoURL]);
+
+  const handleAvatarFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileError('กรุณาเลือกไฟล์ภาพขนาดไม่เกิน 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setEditPhoto(reader.result);
+        setProfileError('');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) {
+      setProfileError('กรุณาระบุชื่อผู้ใช้งาน');
+      return;
+    }
+    setProfileSaving(true);
+    setProfileError('');
+    setProfileSuccess('');
+    try {
+      await updateUserProfile(editName.trim(), editPhoto);
+      setProfileSuccess('อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว');
+      setTimeout(() => setProfileSuccess(''), 3000);
+    } catch (err: any) {
+      setProfileError(err?.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // Logged In View
   if (currentUser || isAdmin) {
-    return (
-      <div className="max-w-md mx-auto py-12">
-        <div className="bg-white p-7 rounded-3xl border border-slate-200/90 text-center space-y-4 shadow-sm">
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-100">
-            {isAdmin ? <ShieldCheck className="w-7 h-7" /> : <User className="w-7 h-7" />}
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              {isAdmin ? 'ผู้ดูแลระบบ (Admin)' : currentUser?.displayName || 'ผู้ใช้งาน'}
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isAdmin ? 'สิทธิ์จัดการระบบ' : currentUser?.email}
-            </p>
-          </div>
+    if (isAdmin) {
+      return (
+        <div className="max-w-md mx-auto py-12">
+          <div className="bg-white p-7 rounded-3xl border border-stone-200 text-center space-y-4 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-100">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl font-bold text-slate-900">
+                ผู้ดูแลระบบ (Admin)
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                มีสิทธิ์ตรวจสอบและจัดการข้อมูลทั้งหมดในระบบ
+              </p>
+            </div>
 
-          <div className="pt-2 flex flex-col gap-2">
-            <Link
-              to="/report/lost"
-              className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm transition-colors"
-            >
-              ลงประกาศสิ่งของ
-            </Link>
-            
+            <div className="pt-2 flex flex-col gap-2">
+              <Link
+                to="/admin"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm transition-colors"
+              >
+                เข้าสู่แผงจัดการระบบ Admin
+              </Link>
+              
+              <button
+                onClick={async () => {
+                  await logout();
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                ออกจากระบบ
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="max-w-xl mx-auto py-8 space-y-6">
+        {/* Profile Card & Editor */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-300/80 shadow-xs space-y-6">
+          <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+            <div>
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
+                จัดการโปรไฟล์ผู้ใช้งาน
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                แก้ไขชื่อที่แสดงและเลือกรูปภาพประจำตัวสำหรับลงประกาศและติดต่อ
+              </p>
+            </div>
             <button
-              onClick={async () => {
-                await logout();
-              }}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              onClick={async () => await logout()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-stone-100 hover:bg-stone-200 transition-colors cursor-pointer"
+              title="ออกจากระบบ"
             >
               <LogOut className="w-3.5 h-3.5" />
-              ออกจากระบบ
+              <span>ออกจากระบบ</span>
             </button>
+          </div>
 
-            {!isAdmin && (
+          {/* Feedback alerts */}
+          {profileSuccess && (
+            <div className="flex items-center gap-2 text-emerald-800 bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-xs font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{profileSuccess}</span>
+            </div>
+          )}
+
+          {profileError && (
+            <div className="flex items-center gap-2 text-rose-800 bg-rose-50 border border-rose-200 p-3 rounded-2xl text-xs font-semibold">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{profileError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            {/* 1. Avatar Display & Controls */}
+            <div>
+              <label className="block font-display text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+                รูปโปรไฟล์ / อวาตาร์
+              </label>
+
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-2xl bg-[#faf9f5] border border-stone-200">
+                {/* Avatar Preview */}
+                <div className="relative group shrink-0">
+                  <div className="w-20 h-20 rounded-2xl bg-white border-2 border-stone-300 overflow-hidden shadow-xs flex items-center justify-center">
+                    {editPhoto ? (
+                      <img 
+                        src={editPhoto} 
+                        alt="Profile preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-tr from-teal-600 to-cyan-500 text-white flex items-center justify-center font-display font-bold text-2xl">
+                        {editName?.[0] || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  {editPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setEditPhoto('')}
+                      className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-1 text-[10px] hover:bg-rose-600 shadow cursor-pointer"
+                      title="ลบรูปโปรไฟล์"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Upload & Preset Options */}
+                <div className="flex-1 w-full space-y-3 text-left">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* File upload button */}
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-stone-300 hover:border-teal-500 text-xs font-semibold text-slate-700 hover:bg-teal-50/50 cursor-pointer shadow-2xs transition-all">
+                      <Upload className="w-3.5 h-3.5 text-teal-600" />
+                      <span>อัปโหลดรูปภาพ</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleAvatarFile} 
+                        className="hidden" 
+                      />
+                    </label>
+
+                    {/* URL toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomUrl(!showCustomUrl)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-stone-300 hover:border-stone-400 text-xs font-semibold text-slate-600 hover:bg-stone-50 cursor-pointer shadow-2xs transition-all"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-slate-500" />
+                      <span>ใส่ลิงก์รูปภาพ</span>
+                    </button>
+                  </div>
+
+                  {showCustomUrl && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="url"
+                        placeholder="https://example.com/avatar.jpg"
+                        value={editPhoto}
+                        onChange={(e) => setEditPhoto(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-stone-300 rounded-xl outline-none focus:border-teal-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Preset Emojis */}
+                  <div>
+                    <span className="text-[11px] font-semibold text-stone-500 block mb-1.5 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>หรือเลือกอวาตาร์สำเร็จรูป:</span>
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {AVATAR_PRESETS.map((emoji) => {
+                        const avatarUri = createEmojiAvatar(emoji);
+                        const isSelected = editPhoto === avatarUri;
+
+                        return (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                              setEditPhoto(avatarUri);
+                              setProfileError('');
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center text-base transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'bg-teal-100 border-2 border-teal-600 scale-105 shadow-2xs' 
+                                : 'bg-white hover:bg-stone-100 border border-stone-200'
+                            }`}
+                            title={`เลือกอวาตาร์ ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Display Name */}
+            <div>
+              <label className="block font-display text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                ชื่อที่แสดงในระบบ (Display Name)
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น มานี รักดี, ช่างไอที"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-stone-50/70 border border-stone-300 rounded-xl text-xs sm:text-sm text-slate-900 outline-none focus:bg-white focus:border-teal-600 focus:ring-2 focus:ring-teal-100 transition-all font-medium"
+                />
+              </div>
+              <p className="text-[11px] text-stone-500 mt-1">
+                ชื่อนี้จะปรากฏบนตั๋วเคลม ประกาศของหาย/พบของ และข้อความแชตของคุณ
+              </p>
+            </div>
+
+            {/* 3. Account Email (Read-only) */}
+            <div>
+              <label className="block font-display text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                อีเมลบัญชีผู้ใช้
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  disabled
+                  value={currentUser.email || 'ไม่มีข้อมูลอีเมล'}
+                  className="w-full pl-10 pr-4 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-xs text-stone-600 cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-2">
               <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-rose-500 hover:text-rose-700 hover:underline pt-2"
+                type="submit"
+                disabled={profileSaving}
+                className="w-full bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                ลบบัญชีผู้ใช้ของฉัน
+                {profileSaving ? (
+                  <span>กำลังบันทึก...</span>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>บันทึกการเปลี่ยนแปลงโปรไฟล์</span>
+                  </>
+                )}
               </button>
-            )}
+            </div>
+          </form>
+
+          {/* Quick Actions Links */}
+          <div className="pt-4 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <Link
+                to="/my-posts"
+                className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-teal-50 text-stone-700 hover:text-teal-800 font-semibold transition-colors"
+              >
+                ติดตามประกาศของฉัน
+              </Link>
+              <Link
+                to="/report/lost"
+                className="px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 font-semibold transition-colors"
+              >
+                + ลงประกาศสิ่งของ
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-700 hover:underline cursor-pointer py-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>ลบบัญชีของฉัน</span>
+            </button>
           </div>
         </div>
 
@@ -225,22 +514,22 @@ export default function Login() {
               <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-3 mx-auto">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">ยืนยันการลบบัญชี</h3>
+              <h3 className="font-display text-base font-bold text-slate-900 mb-1">ยืนยันการลบบัญชี</h3>
               <p className="text-slate-500 text-xs mb-5">
-                บัญชีและข้อมูลของคุณจะถูกลบออกจากระบบ
+                บัญชีและข้อมูลของคุณจะถูกลบออกจากระบบอย่างถาวร
               </p>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deletingAccount}
-                  className="flex-1 py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-200"
+                  className="flex-1 py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-200 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button 
                   onClick={handleDeleteMyAccount}
                   disabled={deletingAccount}
-                  className="flex-1 py-2 bg-rose-600 text-white font-semibold text-xs rounded-xl hover:bg-rose-700 shadow-sm"
+                  className="flex-1 py-2 bg-rose-600 text-white font-semibold text-xs rounded-xl hover:bg-rose-700 shadow-sm cursor-pointer"
                 >
                   {deletingAccount ? 'กำลังลบ...' : 'ยืนยันลบบัญชี'}
                 </button>

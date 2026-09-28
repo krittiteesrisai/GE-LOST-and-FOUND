@@ -2,50 +2,150 @@
 
 @layer base {
   :root {
+    --font-western: 'Rye', 'Smokum', 'Pridi', serif;
+    --font-display: 'Rye', 'Fraunces', 'Pridi', serif;
     --font-sans: 'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
   body {
     font-family: var(--font-sans);
-    letter-spacing: -0.015em;
-    background-color: #f6fafd;
-    color: #0f172a;
+    letter-spacing: -0.012em;
+    background-color: #f7f2e7;
+    background-image: radial-gradient(#d6c9b3 0.75px, transparent 0.75px), radial-gradient(#d6c9b3 0.75px, #f7f2e7 0.75px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+    color: #261e16;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
 }
 
-/* Custom subtle glass and card shine */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 238, 246, 0.9);
+/* Custom font utilities */
+.font-display {
+  font-family: var(--font-display);
 }
 
-.teal-gradient-hero {
-  background: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f0fdf9 45%, #e6f9f6 85%, #d1f4ed 100%);
+.font-western {
+  font-family: var(--font-western);
 }
 
-@keyframes fadeIn {
-  from {
+.font-body {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Western Wanted Poster Board Frame */
+.wanted-board-frame {
+  background-color: #fefdf9;
+  border: 3px double #78350f;
+  box-shadow: 0 4px 15px -2px rgba(120, 53, 15, 0.15), inset 0 0 24px rgba(180, 83, 9, 0.05);
+}
+
+/* Sheriff Star Badge effect */
+.sheriff-badge-gold {
+  background: linear-gradient(135deg, #fef08a 0%, #ca8a04 50%, #854d0e 100%);
+  color: #422006;
+  border: 1px solid #facc15;
+  box-shadow: 0 2px 8px rgba(202, 138, 4, 0.35);
+}
+
+/* Authentic Rubber Stamp Slam Animation (For Returned status) */
+@keyframes stampSlam {
+  0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: scale(2.4) rotate(-16deg);
+    filter: blur(2px);
   }
-  to {
+  60% {
+    opacity: 0.95;
+    transform: scale(0.96) rotate(-4deg);
+    filter: blur(0);
+  }
+  80% {
+    transform: scale(1.04) rotate(-6deg);
+  }
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) rotate(-5deg);
   }
+}
+
+.animate-stamp-slam {
+  animation: stampSlam 0.42s cubic-bezier(0.18, 0.89, 0.32, 1.25) forwards;
+  transform-origin: center center;
+}
+
+/* Rubber Stamp Physical Inking */
+.stamp-ink {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 800;
+  border-width: 2.5px;
+  border-style: solid;
+  border-radius: 4px;
+  line-height: 1.15;
+  user-select: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.stamp-ink-double {
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+  border-width: 3px;
+  border-style: double;
+  border-radius: 4px;
+  line-height: 1.15;
+  user-select: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Claim Ticket Perforation Line Notches matching Western paper tone */
+.ticket-notch-left {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #f7f2e7;
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right: 1.5px solid #d6c9b3;
+}
+
+.ticket-notch-right {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #f7f2e7;
+  position: absolute;
+  right: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 1.5px solid #d6c9b3;
+}
+
+/* Saloon Wood Texture Card */
+.saloon-wood {
+  background: linear-gradient(180deg, #3d2314 0%, #2b170c 100%);
+  border: 2px solid #5c351f;
+  color: #fbf5eb;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.22s ease-out forwards;
 }
 
 .animate-shake {
