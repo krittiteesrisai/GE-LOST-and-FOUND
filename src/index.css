@@ -29,6 +29,29 @@
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
   }
+
+  /* High-Contrast Smooth Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #e2e8f0;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #0d9488;
+    border-radius: 9999px;
+    border: 2px solid #e2e8f0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #0f766e;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #0d9488 #e2e8f0;
+  }
 }
 
 /* Custom font utilities */
@@ -71,6 +94,39 @@
 .animate-item-unroll {
   animation: itemUnroll 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.15) both;
   transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+/* Page Transition: Smooth Slide-in from right / left (เลื่อนไปมาแบบสมูท ไม่วาร์ป) */
+@keyframes pageSlideFromRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(36px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes pageSlideFromLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-36px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-page-slide-left {
+  animation: pageSlideFromRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-page-slide-right {
+  animation: pageSlideFromLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) both;
   will-change: transform, opacity;
 }
 

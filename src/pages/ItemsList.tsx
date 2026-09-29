@@ -148,57 +148,57 @@ export default function ItemsList() {
             </p>
           </div>
 
-          {/* Segmented Control Switcher */}
-          <div className="inline-flex bg-teal-50/80 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-teal-100 flex-wrap gap-1">
+          {/* Segmented Control Switcher - High Contrast */}
+          <div className="inline-flex bg-slate-100 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-slate-300/80 shadow-xs flex-wrap gap-1">
             <button
               onClick={() => handleTabChange('all')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'all'
-                  ? 'bg-white text-teal-950 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-teal-800 text-white shadow-sm'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-white/80'
               }`}
             >
               ทั้งหมด
             </button>
             <button
               onClick={() => handleTabChange('lost')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'lost'
-                  ? 'bg-white text-amber-600 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-amber-700'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:text-amber-800 hover:bg-white/80'
               }`}
             >
               ตามหาของ
             </button>
             <button
               onClick={() => handleTabChange('found')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'found'
-                  ? 'bg-white text-teal-700 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-teal-700 text-white shadow-sm'
+                  : 'text-slate-700 hover:text-teal-900 hover:bg-white/80'
               }`}
             >
               พบของ
             </button>
             <button
               onClick={() => handleTabChange('resolved')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'resolved'
-                  ? 'bg-white text-emerald-700 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-emerald-700'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'text-slate-700 hover:text-emerald-800 hover:bg-white/80'
               }`}
             >
               ส่งคืนแล้ว
             </button>
             <button
               onClick={() => handleTabChange('mine')}
-              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
                 activeTab === 'mine'
-                  ? 'bg-white text-teal-950 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-teal-900'
+                  ? 'bg-teal-800 text-white shadow-sm'
+                  : 'text-slate-700 hover:text-teal-950 hover:bg-white/80'
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-teal-600" />
+              <Package className={`w-3.5 h-3.5 ${activeTab === 'mine' ? 'text-teal-200' : 'text-teal-700'}`} />
               ประกาศของฉัน
             </button>
           </div>

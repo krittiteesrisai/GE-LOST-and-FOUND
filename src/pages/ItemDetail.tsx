@@ -107,6 +107,8 @@ export default function ItemDetail() {
         const isUserAuthor = !!activeUid && !!itemData.authorId && itemData.authorId === activeUid;
         if (myItems.includes(id) || isAdmin || isUserAuthor) {
           setIsOwner(true);
+        } else {
+          setIsOwner(false);
         }
       } else {
         setItem(null);
@@ -271,8 +273,8 @@ export default function ItemDetail() {
             <span className="flex items-center gap-1.5">
               <span>CAMPUS LOST & FOUND NOTICE BOARD</span>
             </span>
-            <span className="tracking-widest uppercase text-slate-400 font-semibold">
-              DOCUMENT ID: TKT-{(item.id || '').slice(0, 6).toUpperCase()}
+            <span className="tracking-widest uppercase text-slate-400 font-medium text-[10px]">
+              OFFICIAL RECORD
             </span>
           </div>
 

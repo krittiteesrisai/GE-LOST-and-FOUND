@@ -1,38 +1,22 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TransitionProvider } from './context/TransitionContext';
 import { Navbar } from './components/Navbar';
 import { ScrollToTop } from './components/ScrollToTop';
-import Home from './pages/Home';
-import ItemsList from './pages/ItemsList';
-import ReportForm from './pages/ReportForm';
-import ItemDetail from './pages/ItemDetail';
-import Admin from './pages/Admin';
-import Login from './pages/Login';
-import MyPosts from './pages/MyPosts';
-import Help from './pages/Help';
+import { AnimatedRoutes } from './components/AnimatedRoutes';
 import { HeartHandshake, ShieldCheck, Sparkles, HelpCircle, MessageSquare } from 'lucide-react';
 
 export default function App() {
   return (
     <AuthProvider>
       <Router>
-        <ScrollToTop />
-        <div className="min-h-screen bg-[#f7fafc] flex flex-col font-sans text-slate-800 selection:bg-teal-500/20 selection:text-teal-900">
-          <Navbar />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/list" element={<ItemsList />} />
-              <Route path="/my-posts" element={<MyPosts />} />
-              <Route path="/report" element={<ReportForm />} />
-              <Route path="/report/:type" element={<ReportForm />} />
-              <Route path="/edit/:id" element={<ReportForm />} />
-              <Route path="/item/:id" element={<ItemDetail />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/login" element={<Login />} />
-            </Routes>
-          </main>
+        <TransitionProvider>
+          <ScrollToTop />
+          <div className="min-h-screen bg-[#f7fafc] flex flex-col font-sans text-slate-800 selection:bg-teal-500/20 selection:text-teal-900 overflow-x-hidden">
+            <Navbar />
+            <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 overflow-x-hidden">
+              <AnimatedRoutes />
+            </main>
           
           {/* Dental Clinic Aesthetic Footer */}
           <footer className="bg-white/90 backdrop-blur-md border-t border-slate-200/80 mt-auto">
@@ -87,7 +71,8 @@ export default function App() {
             </div>
           </footer>
         </div>
-      </Router>
-    </AuthProvider>
+      </TransitionProvider>
+    </Router>
+  </AuthProvider>
   );
 }

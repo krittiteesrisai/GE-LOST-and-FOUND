@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, Lock, X } from 'lucide-react';
 import { Item } from '../types';
 
@@ -17,16 +18,36 @@ export function ConfirmResolveModal({
   item,
   loading = false
 }: ConfirmResolveModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const isLost = item?.type === 'lost';
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none"
+      onClick={onClose}
+    >
       <div 
-        className="bg-white rounded-3xl max-w-md w-full border border-teal-100 shadow-2xl overflow-hidden p-6 sm:p-7 relative transition-all scale-100 animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-3xl max-w-md w-full border border-teal-100 shadow-2xl overflow-hidden p-6 sm:p-7 relative transition-all scale-100 my-auto text-slate-800"
         role="dialog"
         aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
@@ -110,4 +131,7 @@ export function ConfirmResolveModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
+
