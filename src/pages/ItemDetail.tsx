@@ -8,6 +8,7 @@ import { TrackingProgressBar } from '../components/TrackingProgressBar';
 import { ItemChat } from '../components/ItemChat';
 import { ConfirmResolveModal } from '../components/ConfirmResolveModal';
 import { ClaimTicketCard } from '../components/ClaimTicketCard';
+import { useReturnedStampAnimation } from '../hooks/useReturnedStampAnimation';
 import { 
   MapPin, 
   Calendar, 
@@ -51,6 +52,14 @@ export default function ItemDetail() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const navigate = useNavigate();
+
+  // Reset window scroll to top when item ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  // Animation hook: monitors item status and triggers stampSlam whenever status becomes 'resolved' / 'Returned'
+  const { isStamping, animationClass, triggerStamp } = useReturnedStampAnimation(item?.status);
 
   // Handle ESC key and scroll lock for image lightbox
   useEffect(() => {
@@ -147,6 +156,9 @@ export default function ItemDetail() {
         stage: newStage
       });
       setItem({ ...item, status: newStatus, stage: newStage });
+      if (newStatus === 'resolved') {
+        triggerStamp();
+      }
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -242,53 +254,62 @@ export default function ItemDetail() {
         isAdmin={isAdmin}
         onStatusChange={(newStage, newStatus) => {
           setItem(prev => prev ? { ...prev, stage: newStage, status: newStatus } : null);
+          if (newStatus === 'resolved') {
+            triggerStamp();
+          }
         }}
       />
 
-      {/* Main Details Card - Wild West Styling */}
-      <div className="bg-[#fefdfa] rounded-3xl border-2 border-amber-900/25 shadow-xs overflow-hidden">
-        {/* Status Header Bar */}
-        <div className={`px-6 sm:px-8 py-4 ${
-          isResolved 
-            ? 'bg-stone-100 border-b border-stone-200' 
-            : isLost 
-              ? 'bg-rose-950 text-rose-100 border-b-2 border-rose-900' 
-              : 'bg-stone-900 text-amber-200 border-b-2 border-stone-800'
-        } flex flex-wrap items-center justify-between gap-3`}>
+      {/* Main Details Card - Styled like a physical Notice Sheet that unrolls from top */}
+      <div className="relative animate-item-unroll">
+        {/* Metal Paper Clip at Top Center */}
+        <div className="notice-pin-clip hidden sm:block" title="Notice Clip" />
+
+        <div className="notice-poster border border-slate-200/90 overflow-hidden relative">
+          {/* Subtle paper header watermark band */}
+          <div className="bg-slate-50/90 px-6 py-2 border-b border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+            <span className="flex items-center gap-1.5">
+              <span>CAMPUS LOST & FOUND NOTICE BOARD</span>
+            </span>
+            <span className="tracking-widest uppercase text-slate-400 font-semibold">
+              DOCUMENT ID: TKT-{(item.id || '').slice(0, 6).toUpperCase()}
+            </span>
+          </div>
+
+          {/* Status Header Bar */}
+          <div className={`px-6 sm:px-8 py-4 ${
+            isResolved 
+              ? 'bg-emerald-50/70 border-b border-emerald-100' 
+              : isLost 
+                ? 'bg-amber-50/80 border-b border-amber-100' 
+                : 'bg-teal-50/80 border-b border-teal-100'
+          } flex flex-wrap items-center justify-between gap-3`}>
           <div className="flex items-center flex-wrap gap-3">
             {/* Rubber Stamp Status Badge */}
             {isResolved ? (
-              <div className="animate-stamp-slam stamp-ink-double border-emerald-900 text-emerald-950 bg-emerald-50 px-3 py-1 text-xs font-black tracking-wider shadow-sm transform -rotate-3">
-                <span>✓ ส่งคืนสำเร็จ ปิดคดี</span>
-                <span className="ml-1 text-[10px] font-mono text-emerald-800">RECOVERED</span>
+              <div className={`stamp-ink-double border-emerald-700 text-emerald-800 bg-emerald-50 px-3 py-1 text-xs font-black tracking-wider shadow-sm transform -rotate-3 ${animationClass || (isStamping ? 'animate-stamp-slam' : '')}`}>
+                <span>✓ ส่งคืนสำเร็จ</span>
+                <span className="ml-1 text-[10px] font-mono text-emerald-600">RETURNED</span>
               </div>
             ) : isLost ? (
-              <div className="stamp-ink border-rose-400 text-rose-100 bg-rose-900/90 px-3 py-1 text-xs font-black tracking-wider shadow-2xs transform -rotate-2">
-                <span>★ WANTED ★ ประกาศตามล่า</span>
-                <span className="ml-1 text-[10px] font-mono text-rose-300">MISSING</span>
+              <div className="stamp-ink border-amber-600 text-amber-800 bg-amber-50 px-3 py-1 text-xs font-bold tracking-wider shadow-2xs transform -rotate-2">
+                <span>กำลังตามหา</span>
+                <span className="ml-1 text-[10px] font-mono text-amber-600">SEARCHING</span>
               </div>
             ) : (
-              <div className="stamp-ink border-amber-400 text-amber-100 bg-amber-950/90 px-3 py-1 text-xs font-black tracking-wider shadow-2xs transform rotate-1">
-                <span>★ SAFEKEEPING ★ ฝากที่อำเภอ</span>
-                <span className="ml-1 text-[10px] font-mono text-amber-300">FOUND</span>
+              <div className="stamp-ink border-teal-700 text-teal-800 bg-teal-50 px-3 py-1 text-xs font-bold tracking-wider shadow-2xs transform rotate-1">
+                <span>รับแจ้งพบ</span>
+                <span className="ml-1 text-[10px] font-mono text-teal-600">FOUND</span>
               </div>
             )}
 
             {/* Real Ticket ID in Monospace */}
-            <div className="flex items-center gap-1.5 bg-white/90 border border-amber-900/30 px-2.5 py-1 rounded-md text-stone-900 shadow-2xs">
-              <span className="text-[10px] font-bold text-amber-900 uppercase">★ ตั๋ว ID</span>
-              <span className="font-mono font-bold text-xs tracking-wider">
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-md text-slate-700 shadow-2xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">ตั๋ว ID</span>
+              <span className="font-mono font-bold text-xs tracking-wider text-teal-950">
                 TKT-{(item.id || '').slice(0, 6).toUpperCase()}
               </span>
             </div>
-
-            {/* Bounty Badge if present */}
-            {item.reward && item.reward > 0 && (
-              <div className="flex items-center gap-1 bg-amber-400 text-stone-950 px-2.5 py-1 rounded-md font-bold text-xs shadow-2xs">
-                <span>💰 ค่าหัว/รางวัล:</span>
-                <span className="font-mono font-black">฿{item.reward.toLocaleString()}</span>
-              </div>
-            )}
           </div>
 
           {(isOwner || isAdmin) && (
@@ -313,9 +334,9 @@ export default function ItemDetail() {
               <button
                 onClick={() => setShowResolveConfirm(true)}
                 disabled={resolving}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-emerald-700 hover:bg-emerald-800 text-white cursor-pointer"
+                className="px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
               >
-                {resolving ? 'กำลังอัปเดต...' : 'ทำเครื่องหมายว่า "ส่งคืนสำเร็จแล้ว (ปิดคดี)"'}
+                {resolving ? 'กำลังอัปเดต...' : 'ทำเครื่องหมายว่า "ส่งคืนสำเร็จแล้ว"'}
               </button>
             )
           )}
@@ -363,7 +384,7 @@ export default function ItemDetail() {
               {/* Authentic Rubber Stamp Slam Overlay on Resolved Status */}
               {isResolved && (
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[1.5px] flex items-center justify-center p-4 z-20 pointer-events-none">
-                  <div className="animate-stamp-slam stamp-ink-double border-emerald-800 text-emerald-950 bg-emerald-50/95 px-6 py-3.5 text-center shadow-2xl transform -rotate-5">
+                  <div className={`${animationClass || 'animate-stamp-slam'} stamp-ink-double border-emerald-800 text-emerald-950 bg-emerald-50/95 px-6 py-3.5 text-center shadow-2xl transform -rotate-5`}>
                     <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-black tracking-wider">
                       <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
                       <span>ได้รับคืนแล้ว</span>
@@ -509,7 +530,25 @@ export default function ItemDetail() {
             </div>
           </div>
         </div>
+
+        {/* Perforated bottom tear strip (ขอบกระดาษปรุด้านล่างของใบประกาศ) */}
+        <div className="relative py-1 flex items-center px-4 bg-slate-50/60 border-t border-slate-200/80">
+          <span className="ticket-notch-left" aria-hidden="true" />
+          <div className="w-full border-t border-dashed border-slate-300" />
+          <span className="ticket-notch-right" aria-hidden="true" />
+        </div>
+
+        {/* Notice Sheet Footer Bar */}
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-150 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-600">ใบประกาศอย่างเป็นทางการผ่านระบบ Campus Lost & Found</span>
+          </div>
+          <span className="font-mono text-[11px] text-slate-400">
+            RECORD VERIFIED • CAMPUS CENTER
+          </span>
+        </div>
       </div>
+    </div>
 
       {/* Real-time Post Chat / Lead Discussion */}
       <ItemChat 

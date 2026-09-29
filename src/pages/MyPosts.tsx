@@ -70,21 +70,21 @@ export default function MyPosts() {
         <div>
           <Link 
             to="/" 
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-amber-900 mb-2 transition-all duration-150 active:scale-95 group"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 mb-2 transition-all duration-150 active:scale-95 group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             <span>กลับสู่หน้าแรก</span>
           </Link>
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-2xl bg-amber-900 text-amber-100 shadow-xs border border-amber-700">
-              <Package className="w-5 h-5 text-amber-300" />
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-2xl bg-teal-600 text-white shadow-xs">
+              <Package className="w-5 h-5" />
             </span>
             <div>
-              <h1 className="font-western text-xl sm:text-2xl font-black text-stone-900 tracking-wide">
-                ★ ป้ายประกาศของฉัน (My Posters)
+              <h1 className="font-display text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                ติดตามประกาศของฉัน
               </h1>
-              <p className="text-xs text-stone-600 font-medium">
-                รายการของที่คุณเคยปักป้ายไว้ในเมือง ติดตามตั๋ว ID และสถานะการส่งคืน
+              <p className="text-xs text-slate-500">
+                รายการสิ่งของที่คุณเคยลงประกาศไว้ ติดตามสถานะและปรับปรุงข้อมูลได้ทันที
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function MyPosts() {
           <button
             onClick={refresh}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#fefdfa] border-2 border-amber-900/20 text-stone-800 rounded-xl hover:bg-amber-100/50 active:scale-95 transition-all shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
             title="รีเฟรชข้อมูล"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -103,50 +103,50 @@ export default function MyPosts() {
 
           <Link
             to="/report/lost"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-gradient-to-r from-amber-800 to-stone-900 hover:from-amber-900 hover:to-black text-amber-50 rounded-xl active:scale-95 transition-all shadow-xs border border-amber-700/50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl active:scale-95 transition-all shadow-xs"
           >
-            <PlusCircle className="w-4 h-4 text-amber-300" />
-            <span>+ ปักป้ายใหม่</span>
+            <PlusCircle className="w-4 h-4" />
+            <span>ลงประกาศใหม่</span>
           </Link>
         </div>
       </div>
 
-      {/* Unified Tally Filter Strip - Wild West */}
-      <div className="bg-[#fdfaf2] rounded-2xl border-2 border-amber-900/30 shadow-2xs overflow-hidden grid grid-cols-3 divide-x divide-amber-900/20">
+      {/* Unified Tally Filter Strip */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden grid grid-cols-3 divide-x divide-slate-100">
         <button
           onClick={() => setFilter('all')}
           className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'all' 
-              ? 'bg-white shadow-inner border-b-2 border-amber-900' 
-              : 'hover:bg-amber-100/40'
+              ? 'bg-slate-50 border-b-2 border-teal-600' 
+              : 'hover:bg-slate-50/60'
           }`}
         >
-          <span className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block">ทั้งหมด</span>
-          <div className="font-display font-black text-2xl text-stone-900 mt-0.5 tabular-nums">{totalCount}</div>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">ทั้งหมด</span>
+          <div className="font-display text-2xl font-black text-slate-900 mt-0.5 tabular-nums">{totalCount}</div>
         </button>
 
         <button
           onClick={() => setFilter('active')}
           className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'active' 
-              ? 'bg-rose-50/80 shadow-inner border-b-2 border-rose-800' 
-              : 'hover:bg-rose-50/40'
+              ? 'bg-amber-50/80 border-b-2 border-amber-600' 
+              : 'hover:bg-amber-50/30'
           }`}
         >
-          <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">★ กำลังตามหา</span>
-          <div className="font-display font-black text-2xl text-rose-950 mt-0.5 tabular-nums">{activeCount}</div>
+          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">กำลังตามหา</span>
+          <div className="font-display text-2xl font-black text-amber-900 mt-0.5 tabular-nums">{activeCount}</div>
         </button>
 
         <button
           onClick={() => setFilter('resolved')}
           className={`p-3.5 text-left transition-all duration-150 cursor-pointer ${
             filter === 'resolved' 
-              ? 'bg-emerald-50/80 shadow-inner border-b-2 border-emerald-800' 
-              : 'hover:bg-emerald-50/40'
+              ? 'bg-emerald-50/80 border-b-2 border-emerald-600' 
+              : 'hover:bg-emerald-50/30'
           }`}
         >
-          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">✓ ส่งคืนสำเร็จ</span>
-          <div className="font-display font-black text-2xl text-emerald-950 mt-0.5 tabular-nums">{resolvedCount}</div>
+          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">ส่งคืนสำเร็จ</span>
+          <div className="font-display text-2xl font-black text-emerald-900 mt-0.5 tabular-nums">{resolvedCount}</div>
         </button>
       </div>
 
@@ -196,7 +196,7 @@ export default function MyPosts() {
         </div>
       ) : (
         <div className="space-y-3.5">
-          {filteredItems.map(item => {
+          {filteredItems.map((item, idx) => {
             const isResolved = item.status === 'resolved';
             const isLost = item.type === 'lost';
             const ticketCode = `TKT-${(item.id || '').slice(0, 6).toUpperCase()}`;
@@ -204,7 +204,8 @@ export default function MyPosts() {
             return (
               <div 
                 key={item.id}
-                className="bg-[#fffdfa] rounded-2xl border border-stone-300 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between overflow-hidden"
+                style={{ animationDelay: `${Math.min(idx * 60, 500)}ms` }}
+                className="bg-[#fffdfa] rounded-2xl border border-stone-300 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between overflow-hidden animate-item-unroll"
               >
                 {/* Left: Thumbnail & Info */}
                 <div className="flex items-start gap-4 p-4 sm:p-5 flex-1 min-w-0">

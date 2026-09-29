@@ -120,45 +120,40 @@ export default function Home() {
 
   return (
     <div className="space-y-8 sm:space-y-10 max-w-5xl mx-auto pb-10">
-      {/* 1. Hero & Interactive Search Section - Wild West Style */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#fdfbf6] border-2 border-amber-900/25 p-6 sm:p-10 text-center shadow-[0_4px_20px_rgba(120,53,15,0.08)]">
-        {/* Decorative corner stars */}
-        <div className="absolute top-3 left-3 text-amber-900/40 text-xs font-serif select-none">★ ★ ★</div>
-        <div className="absolute top-3 right-3 text-amber-900/40 text-xs font-serif select-none">★ ★ ★</div>
-
+      {/* 1. Hero & Interactive Search Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-teal-50/40 to-teal-100/30 border border-teal-100 p-6 sm:p-10 text-center shadow-xs">
         <div className="max-w-2xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-900/10 border border-amber-900/20 text-amber-950 text-[11px] font-western tracking-wider font-bold">
-            <span>★</span>
-            <span>FRONTIER OUTPOST & LOST PROPERTY</span>
-            <span>★</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100/80 border border-teal-200 text-teal-800 text-xs font-semibold">
+            <span>🎒</span>
+            <span>ศูนย์กลางรับแจ้งของหายและพบของภายในมหาวิทยาลัย</span>
           </div>
 
-          <h1 className="font-western text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-wide text-stone-900 leading-tight">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
             กระดานตามหาของหาย <br />
-            <span className="font-display font-black text-amber-800 text-2xl sm:text-3xl md:text-4xl tracking-tight">
-              WILD WEST BOUNTY BOARD
+            <span className="bg-gradient-to-r from-teal-800 via-teal-600 to-cyan-700 bg-clip-text text-transparent">
+              ส่งต่อรอยยิ้มในการรับคืน
             </span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-stone-700 max-w-lg mx-auto leading-relaxed font-medium">
-            ปักป้ายประกาศล่าของรัก หรือส่งมอบของที่เก็บได้ ณ สำนักงานนายอำเภอ เชื่อมต่อเจ้าของตัวจริงในแดนคาวบอย
+          <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+            ค้นหาทรัพย์สินที่สูญหาย หรือแจ้งมอบสิ่งของที่เก็บได้ ติดตามสถานะตั๋ว ID และเชื่อมต่อเจ้าของตัวจริง
           </p>
 
           {/* Interactive Live Search Bar */}
           <div ref={searchContainerRef} className="relative max-w-xl mx-auto pt-2">
             <form onSubmit={handleSearchSubmit}>
-              <div className="flex items-center bg-[#fdfaf2] rounded-2xl border-2 border-amber-900/30 shadow-md p-1.5 focus-within:ring-3 focus-within:ring-amber-200 focus-within:border-amber-800 transition-all">
-                <Search className="w-5 h-5 text-amber-800 ml-3 shrink-0" />
+              <div className="flex items-center bg-white rounded-2xl border-2 border-teal-200 shadow-md p-1.5 focus-within:ring-3 focus-within:ring-teal-100 focus-within:border-teal-600 transition-all">
+                <Search className="w-5 h-5 text-teal-600 ml-3 shrink-0" />
                 <input
                   type="text"
-                  placeholder="ค้นหาตั๋ว ID (TKT-...), ชื่อของหาย, หรือสถานที่ในเมือง..."
+                  placeholder="ค้นหาตั๋ว ID (TKT-...), ชื่อของหาย, สถานที่, หรือประเภทสิ่งของ..."
                   value={quickSearch}
                   onChange={(e) => {
                     setQuickSearch(e.target.value);
                     setIsSearchFocused(true);
                   }}
                   onFocus={() => setIsSearchFocused(true)}
-                  className="w-full px-3 py-2.5 text-xs sm:text-sm text-stone-900 bg-transparent outline-none placeholder:text-stone-400 font-medium"
+                  className="w-full px-3 py-2.5 text-xs sm:text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 />
                 
                 {quickSearch && (
@@ -168,7 +163,7 @@ export default function Home() {
                       setQuickSearch('');
                       setIsSearchFocused(false);
                     }}
-                    className="p-1.5 mr-1 text-stone-400 hover:text-stone-700 rounded-full hover:bg-stone-200/50 transition-colors cursor-pointer"
+                    className="p-1.5 mr-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                     title="ล้างคำค้นหา"
                   >
                     <X className="w-4 h-4" />
@@ -177,7 +172,7 @@ export default function Home() {
 
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-amber-800 to-stone-900 hover:from-amber-900 hover:to-black active:scale-95 text-amber-100 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all shadow-xs cursor-pointer border border-amber-700/50"
+                  className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all shadow-xs cursor-pointer"
                 >
                   ค้นหา
                 </button>
@@ -186,19 +181,19 @@ export default function Home() {
 
             {/* Live Character & Keyword Matching Dropdown */}
             {isSearchFocused && quickSearch.trim().length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#fffefc] rounded-2xl border-2 border-amber-900/30 shadow-xl overflow-hidden z-50 text-left">
-                <div className="p-3 bg-[#f6eee2] border-b border-amber-900/20 flex items-center justify-between text-xs text-amber-950 font-bold">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-teal-100 shadow-xl overflow-hidden z-50 text-left">
+                <div className="p-3 bg-teal-50/80 border-b border-teal-100 flex items-center justify-between text-xs text-teal-900 font-bold">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-                    <span>ผลจับคู่ตั๋ว & คีย์เวิร์ด: "{quickSearch}"</span>
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                    <span>ผลจับคู่คำค้นหา: "{quickSearch}"</span>
                   </div>
-                  <span className="text-[11px] bg-white px-2 py-0.5 rounded-md border border-amber-900/20 text-amber-900 font-bold font-mono">
+                  <span className="text-[11px] bg-white px-2 py-0.5 rounded-md border border-teal-200 text-teal-700 font-bold font-mono">
                     พบ {liveSearchResults.length} รายการ
                   </span>
                 </div>
 
                 {liveSearchResults.length > 0 ? (
-                  <div className="divide-y divide-amber-900/10 max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                     {liveSearchResults.slice(0, 6).map((item) => {
                       const isLost = item.type === 'lost';
                       const isResolved = item.status === 'resolved';
@@ -210,10 +205,10 @@ export default function Home() {
                             setIsSearchFocused(false);
                             navigate(`/item/${item.id}`);
                           }}
-                          className="p-3 hover:bg-amber-50/70 cursor-pointer flex items-center justify-between gap-3 transition-colors group"
+                          className="p-3 hover:bg-teal-50/50 cursor-pointer flex items-center justify-between gap-3 transition-colors group"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-stone-100 overflow-hidden flex items-center justify-center shrink-0 border border-amber-900/20">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
                               {item.imageUrl ? (
                                 <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -221,13 +216,13 @@ export default function Home() {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-display text-xs font-bold text-stone-900 truncate group-hover:text-amber-900 transition-colors">
+                              <p className="font-display text-xs font-bold text-slate-800 truncate group-hover:text-teal-700 transition-colors">
                                 {item.title}
                               </p>
                               {/* 2-line meta without middle dots */}
-                              <div className="text-[11px] text-stone-600 mt-0.5 space-y-0.5">
+                              <div className="text-[11px] text-slate-500 mt-0.5 space-y-0.5">
                                 <div className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3 text-amber-800 shrink-0" />
+                                  <MapPin className="w-3 h-3 text-teal-600 shrink-0" />
                                   <span className="truncate">{item.location}</span>
                                 </div>
                                 <div className="flex items-center gap-1 text-stone-500">
@@ -240,13 +235,13 @@ export default function Home() {
 
                           <div className="shrink-0 flex items-center gap-1.5">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isLost ? 'bg-rose-100 text-rose-900 border border-rose-200' : 'bg-amber-100 text-amber-900 border border-amber-200'
+                              isLost ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-teal-100 text-teal-900 border border-teal-200'
                             }`}>
-                              {isLost ? '★ ตามหา' : '★ รับแจ้งพบ'}
+                              {isLost ? 'กำลังตามหา' : 'รับแจ้งพบ'}
                             </span>
                             {isResolved && (
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
-                                คืนแล้ว
+                                ส่งคืนแล้ว
                               </span>
                             )}
                           </div>
@@ -254,14 +249,14 @@ export default function Home() {
                       );
                     })}
 
-                    <div className="p-2.5 bg-[#f6eee2] border-t border-amber-900/20 text-center">
+                    <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                       <button
                         type="button"
                         onClick={() => {
                           setIsSearchFocused(false);
                           navigate(`/list?q=${encodeURIComponent(quickSearch.trim())}`);
                         }}
-                        className="text-xs font-bold text-amber-900 hover:text-amber-950 inline-flex items-center cursor-pointer"
+                        className="text-xs font-bold text-teal-800 hover:text-teal-950 inline-flex items-center cursor-pointer"
                       >
                         เปิดดูผลการค้นหาบนกระดานทั้งหมด ({liveSearchResults.length} รายการ)
                       </button>
@@ -269,10 +264,10 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="p-6 text-center space-y-2">
-                    <p className="text-xs font-bold text-stone-800">
+                    <p className="text-xs font-bold text-slate-700">
                       ไม่พบรายการที่ตรงกับคำค้นหา "{quickSearch}"
                     </p>
-                    <p className="text-[11px] text-stone-500">
+                    <p className="text-[11px] text-slate-400">
                       ลองใช้คำอื่น เช่น บัตร, ไอโฟน, กระเป๋า หรือเปิดดูกระดานทั้งหมด
                     </p>
                     <button
@@ -281,7 +276,7 @@ export default function Home() {
                         setIsSearchFocused(false);
                         navigate('/list');
                       }}
-                      className="mt-2 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors cursor-pointer"
+                      className="mt-2 text-xs font-bold px-3 py-1.5 rounded-xl bg-teal-50 text-teal-800 hover:bg-teal-100 transition-colors cursor-pointer"
                     >
                       เปิดดูกระดานประกาศทั้งหมด
                     </button>
@@ -291,8 +286,8 @@ export default function Home() {
             )}
 
             {/* Quick searches chips */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 text-xs text-stone-600">
-              <span className="text-stone-500 text-[11px]">ยอดนิยม:</span>
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 text-xs text-slate-500">
+              <span className="text-slate-400 text-[11px]">ยอดนิยม:</span>
               {['บัตรนักศึกษา', 'AirPods', 'กระเป๋าสตางค์', 'กุญแจรถ', 'iPad'].map((tag) => (
                 <button
                   key={tag}
@@ -301,7 +296,7 @@ export default function Home() {
                     setQuickSearch(tag);
                     navigate(`/list?q=${encodeURIComponent(tag)}`);
                   }}
-                  className="px-2.5 py-0.5 rounded-lg bg-white/80 hover:bg-amber-100 border border-amber-900/20 text-stone-800 font-medium text-[11px] transition-all cursor-pointer shadow-2xs"
+                  className="px-2.5 py-0.5 rounded-lg bg-white hover:bg-teal-50 border border-teal-100 text-slate-700 font-medium text-[11px] transition-all cursor-pointer shadow-2xs"
                 >
                   {tag}
                 </button>
@@ -313,22 +308,22 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               to="/report/lost"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-800 to-stone-900 hover:from-amber-900 hover:to-black active:scale-95 text-amber-50 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-xs transition-all border border-amber-700/50"
+              className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-xs transition-all"
             >
-              <HeartHandshake className="w-4 h-4 text-amber-300" />
-              <span>+ ปักป้ายตามหาของหาย (Wanted)</span>
+              <HeartHandshake className="w-4 h-4 text-rose-200" />
+              <span>แจ้งของหาย</span>
             </Link>
             <Link
               to="/report/found"
-              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-amber-50 active:scale-95 text-stone-900 border-2 border-amber-900/30 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-2xs transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-xs transition-all"
             >
-              <span>⭐ แจ้งมอบของที่พบ (Found)</span>
+              <span>แจ้งพบของ</span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 2. Unified Registry Tally Board (แทนการ์ด 3 ใบแยกกัน) */}
+      {/* 2. Unified Registry Tally Board */}
       <section className="space-y-3.5">
         <RegistryTallyBoard stats={stats} />
 
@@ -393,8 +388,12 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {recentItems.map((item) => (
-              <ClaimTicketCard key={item.id} item={item} />
+            {recentItems.map((item, idx) => (
+              <ClaimTicketCard 
+                key={item.id} 
+                item={item} 
+                animationDelay={Math.min(idx * 70, 500)}
+              />
             ))}
           </div>
         )}

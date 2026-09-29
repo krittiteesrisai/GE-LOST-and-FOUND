@@ -242,18 +242,18 @@ export default function Admin() {
 
   return (
     <div className="space-y-5">
-      {/* Header - Wild West Sheriff Office */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-gradient-to-br from-amber-700 to-amber-950 text-amber-200 border border-amber-600 shadow-xs">
-            <ShieldCheck className="w-5 h-5 text-amber-300" />
+        <div className="flex items-center gap-2">
+          <span className="p-1.5 rounded-xl bg-teal-800 text-white shadow-xs">
+            <ShieldCheck className="w-4 h-4 text-cyan-300" />
           </span>
           <div>
-            <h1 className="font-western text-xl sm:text-2xl font-black text-stone-900 tracking-wide flex items-center gap-2">
-              <span>★ สำนักงานนายอำเภอ (Sheriff & Marshal Office)</span>
+            <h1 className="text-xl font-extrabold text-slate-900">
+              ระบบจัดการ (Staff Portal)
             </h1>
-            <p className="text-xs text-stone-600 font-medium">
-              ศูนย์ควบคุมคดีทรัพย์สิน จัดการตั๋ว ID และโทรเลขสื่อสารของเมือง
+            <p className="text-xs text-slate-500">
+              จัดการรายการสิ่งของ ตรวจสอบตั๋ว ID และดูแลการสื่อสารในระบบ
             </p>
           </div>
         </div>

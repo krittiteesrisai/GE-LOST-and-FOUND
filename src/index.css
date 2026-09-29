@@ -2,20 +2,26 @@
 
 @layer base {
   :root {
-    --font-western: 'Rye', 'Smokum', 'Pridi', serif;
-    --font-display: 'Rye', 'Fraunces', 'Pridi', serif;
+    --font-display: 'Fraunces', 'Pridi', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Theme Primary Color System (Teal & Emerald Clean Campus Palette) */
+    --color-primary-50: #f0fdfa;
+    --color-primary-100: #ccfbf1;
+    --color-primary-200: #99f6e4;
+    --color-primary-500: #14b8a6;
+    --color-primary-600: #0d9488;
+    --color-primary-700: #0f766e;
+    --color-primary-800: #115e59;
+    --color-primary-900: #134e4a;
   }
 
   body {
     font-family: var(--font-sans);
-    letter-spacing: -0.012em;
-    background-color: #f7f2e7;
-    background-image: radial-gradient(#d6c9b3 0.75px, transparent 0.75px), radial-gradient(#d6c9b3 0.75px, #f7f2e7 0.75px);
-    background-size: 30px 30px;
-    background-position: 0 0, 15px 15px;
-    color: #261e16;
+    letter-spacing: -0.015em;
+    background-color: #f8fafc;
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -30,10 +36,6 @@
   font-family: var(--font-display);
 }
 
-.font-western {
-  font-family: var(--font-western);
-}
-
 .font-body {
   font-family: var(--font-sans);
 }
@@ -42,35 +44,86 @@
   font-family: var(--font-mono);
 }
 
-/* Western Wanted Poster Board Frame */
-.wanted-board-frame {
-  background-color: #fefdf9;
-  border: 3px double #78350f;
-  box-shadow: 0 4px 15px -2px rgba(120, 53, 15, 0.15), inset 0 0 24px rgba(180, 83, 9, 0.05);
+/* Scroll / Unroll Animation: แต่ละรายการม้วนคลี่ออกมาจากด้านบน (Roll out / Scroll unroll effect) */
+@keyframes itemUnroll {
+  0% {
+    opacity: 0;
+    transform: perspective(900px) rotateX(-50deg) translateY(-22px) scale(0.92);
+    transform-origin: top center;
+    filter: blur(1.5px);
+  }
+  60% {
+    opacity: 0.95;
+    transform: perspective(900px) rotateX(10deg) translateY(3px) scale(1.01);
+    transform-origin: top center;
+    filter: blur(0);
+  }
+  85% {
+    transform: perspective(900px) rotateX(-3deg) translateY(-1px) scale(0.998);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(900px) rotateX(0deg) translateY(0) scale(1);
+    transform-origin: top center;
+  }
 }
 
-/* Sheriff Star Badge effect */
-.sheriff-badge-gold {
-  background: linear-gradient(135deg, #fef08a 0%, #ca8a04 50%, #854d0e 100%);
-  color: #422006;
-  border: 1px solid #facc15;
-  box-shadow: 0 2px 8px rgba(202, 138, 4, 0.35);
+.animate-item-unroll {
+  animation: itemUnroll 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.15) both;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+/* Notice Poster Sheet Styling for Detail / Form Pages */
+.notice-poster {
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 1.5rem;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 25px -5px rgba(15, 118, 110, 0.08),
+    0 25px 40px -15px rgba(0, 0, 0, 0.06);
+}
+
+/* Notice Paper Clip / Pin at top center */
+.notice-pin-clip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 18px;
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%);
+  border-radius: 4px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  z-index: 30;
+}
+
+.notice-pin-clip::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  right: 6px;
+  bottom: 4px;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-bottom: 1.5px solid rgba(51, 65, 85, 0.3);
 }
 
 /* Authentic Rubber Stamp Slam Animation (For Returned status) */
 @keyframes stampSlam {
   0% {
     opacity: 0;
-    transform: scale(2.4) rotate(-16deg);
-    filter: blur(2px);
+    transform: scale(2.6) rotate(-18deg);
+    filter: blur(3px);
   }
-  60% {
+  50% {
     opacity: 0.95;
-    transform: scale(0.96) rotate(-4deg);
+    transform: scale(0.92) rotate(-4deg);
     filter: blur(0);
   }
-  80% {
-    transform: scale(1.04) rotate(-6deg);
+  75% {
+    transform: scale(1.06) rotate(-7deg);
   }
   100% {
     opacity: 1;
@@ -79,27 +132,27 @@
 }
 
 .animate-stamp-slam {
-  animation: stampSlam 0.42s cubic-bezier(0.18, 0.89, 0.32, 1.25) forwards;
+  animation: stampSlam 0.45s cubic-bezier(0.18, 0.89, 0.32, 1.25) both;
   transform-origin: center center;
 }
 
 /* Rubber Stamp Physical Inking */
 .stamp-ink {
   font-family: var(--font-display);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   font-weight: 800;
-  border-width: 2.5px;
+  border-width: 2px;
   border-style: solid;
   border-radius: 4px;
   line-height: 1.15;
   user-select: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .stamp-ink-double {
   font-family: var(--font-display);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 900;
   border-width: 3px;
@@ -107,39 +160,32 @@
   border-radius: 4px;
   line-height: 1.15;
   user-select: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* Claim Ticket Perforation Line Notches matching Western paper tone */
+/* Claim Ticket Perforation Line Notches matching clean paper tone */
 .ticket-notch-left {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: #f7f2e7;
+  background-color: #f8fafc;
   position: absolute;
   left: -7px;
   top: 50%;
   transform: translateY(-50%);
-  border-right: 1.5px solid #d6c9b3;
+  border-right: 1.5px solid #e2e8f0;
 }
 
 .ticket-notch-right {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: #f7f2e7;
+  background-color: #f8fafc;
   position: absolute;
   right: -7px;
   top: 50%;
   transform: translateY(-50%);
-  border-left: 1.5px solid #d6c9b3;
-}
-
-/* Saloon Wood Texture Card */
-.saloon-wood {
-  background: linear-gradient(180deg, #3d2314 0%, #2b170c 100%);
-  border: 2px solid #5c351f;
-  color: #fbf5eb;
+  border-left: 1.5px solid #e2e8f0;
 }
 
 @keyframes shake {

@@ -58,7 +58,7 @@ export default function Help() {
   ];
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs">
         <div className="flex items-center gap-3">

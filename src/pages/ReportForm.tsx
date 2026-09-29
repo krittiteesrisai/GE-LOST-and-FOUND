@@ -284,34 +284,38 @@ export default function ReportForm() {
         <span>กลับหน้าแรก</span>
       </Link>
 
-      <div className="bg-[#fefdfa] rounded-3xl border-2 border-amber-900/25 shadow-sm overflow-hidden">
-        {/* Header & Stepper Progress - Wild West */}
-        <div className={`p-4 sm:p-5 border-b-2 border-amber-900/20 ${isLost ? 'bg-rose-50/70' : 'bg-amber-50/70'}`}>
+      <div className="relative animate-item-unroll">
+        {/* Notice Pin at Top */}
+        <div className="notice-pin-clip hidden sm:block" />
+
+        <div className="notice-poster border border-slate-200/90 overflow-hidden">
+          {/* Header & Stepper Progress */}
+          <div className={`p-4 sm:p-5 border-b border-slate-100 ${isLost ? 'bg-amber-50/40' : 'bg-teal-50/40'}`}>
           <div className="flex items-center justify-between gap-3 mb-4">
-            <h1 className="font-western text-base sm:text-lg font-black text-stone-900 tracking-wide">
-              {isEditMode ? '★ แก้ไขประกาศ' : isLost ? '★ ปักป้ายตามล่าของหาย (WANTED)' : '★ แจ้งมอบของที่พบ (SAFEKEEPING)'}
+            <h1 className="text-base sm:text-lg font-extrabold text-slate-900">
+              {isEditMode ? 'แก้ไขประกาศ' : isLost ? 'แจ้งของหาย' : 'แจ้งพบของ'}
             </h1>
 
             {/* Toggle Lost/Found Type */}
             {!isEditMode && (
-              <div className="flex bg-[#f2e7d5] p-1 rounded-xl shrink-0 border border-amber-900/25">
+              <div className="flex bg-slate-100 p-1 rounded-xl shrink-0 border border-slate-200/60">
                 <button
                   type="button"
                   onClick={() => setItemType('lost')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
-                    isLost ? 'bg-rose-900 text-rose-50 shadow-xs' : 'text-stone-700 hover:text-stone-950'
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 active:scale-90 ${
+                    isLost ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ★ ของหาย (Wanted)
+                  ของหาย
                 </button>
                 <button
                   type="button"
                   onClick={() => setItemType('found')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
-                    !isLost ? 'bg-amber-900 text-amber-100 shadow-xs' : 'text-stone-700 hover:text-stone-950'
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 active:scale-90 ${
+                    !isLost ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  ★ พบของ (Found)
+                  พบของ
                 </button>
               </div>
             )}
@@ -675,5 +679,6 @@ export default function ReportForm() {
         </form>
       </div>
     </div>
+  </div>
   );
 }

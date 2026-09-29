@@ -140,89 +140,81 @@ export default function ItemsList() {
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-western text-amber-900 font-bold uppercase tracking-wider mb-1">
-              <span>★</span>
-              <span>FRONTIER BOUNTY & NOTICE BOARD</span>
-              <span>★</span>
-            </div>
-            <h1 className="font-western text-2xl sm:text-3xl font-black tracking-wide text-stone-900">
-              กระดานประกาศแดนคาวบอย
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              กระดานตามหาของหายและพบของ
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 mt-1 font-medium">
-              ตรวจสอบรายการประกาศตามล่าของหาย (Wanted) หรือทรัพย์สินที่ฝากไว้กับนายอำเภอ
+            <p className="text-sm text-slate-500 mt-1">
+              ค้นหาทรัพย์สินที่สูญหาย หรือตรวจสอบรายการสิ่งของที่มีผู้เก็บได้และนำมาส่งมอบ
             </p>
           </div>
 
-          {/* Segmented Control Switcher - Wild West */}
-          <div className="inline-flex bg-[#f2e7d5] p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border-2 border-amber-900/25 flex-wrap gap-1">
+          {/* Segmented Control Switcher */}
+          <div className="inline-flex bg-teal-50/80 p-1.5 rounded-2xl shrink-0 self-start sm:self-auto border border-teal-100 flex-wrap gap-1">
             <button
               onClick={() => handleTabChange('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
                 activeTab === 'all'
-                  ? 'bg-white text-stone-900 shadow-xs font-black'
-                  : 'text-stone-700 hover:text-stone-950'
+                  ? 'bg-white text-teal-950 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-teal-900'
               }`}
             >
               ทั้งหมด
             </button>
             <button
               onClick={() => handleTabChange('lost')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'lost'
-                  ? 'bg-rose-900 text-rose-50 shadow-xs font-black'
-                  : 'text-rose-900 hover:bg-rose-100/50'
+                  ? 'bg-white text-amber-600 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-amber-700'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-              ★ ตามล่า (WANTED)
+              ตามหาของ
             </button>
             <button
               onClick={() => handleTabChange('found')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'found'
-                  ? 'bg-amber-900 text-amber-100 shadow-xs font-black'
-                  : 'text-amber-950 hover:bg-amber-100/50'
+                  ? 'bg-white text-teal-700 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-teal-900'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              ★ ฝากอำเภอ (FOUND)
+              พบของ
             </button>
             <button
               onClick={() => handleTabChange('resolved')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'resolved'
-                  ? 'bg-emerald-900 text-emerald-100 shadow-xs font-black'
-                  : 'text-emerald-900 hover:bg-emerald-100/50'
+                  ? 'bg-white text-emerald-700 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-emerald-700'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              ✓ คืนแล้ว
+              ส่งคืนแล้ว
             </button>
             <button
               onClick={() => handleTabChange('mine')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
                 activeTab === 'mine'
-                  ? 'bg-stone-900 text-amber-200 shadow-xs font-black'
-                  : 'text-stone-700 hover:text-stone-950'
+                  ? 'bg-white text-teal-950 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-teal-900'
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-amber-600" />
-              ของฉัน
+              <Package className="w-3.5 h-3.5 text-teal-600" />
+              ประกาศของฉัน
             </button>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#fefdfa] p-4 rounded-3xl border-2 border-amber-900/20 shadow-xs flex flex-col md:flex-row gap-3">
+        <div className="bg-white p-4 rounded-3xl border border-teal-100/80 shadow-xs flex flex-col md:flex-row gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-800" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-500" />
             <input
               type="text"
-              placeholder="ค้นหาตั๋ว ID, ชื่อของ, หรือคีย์เวิร์ดสำคัญ..."
+              placeholder="ค้นหาตั๋ว ID, ชื่อของหาย, สถานที่, หรือคำสำคัญ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-amber-900/20 bg-stone-50/50 focus:bg-white focus:ring-2 focus:ring-amber-700 focus:border-amber-800 outline-none text-stone-900 placeholder:text-stone-400 font-medium"
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-slate-800 placeholder:text-slate-400"
             />
             {searchTerm && (
               <button
@@ -347,8 +339,12 @@ export default function ItemsList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filteredItems.map((item) => (
-            <ClaimTicketCard key={item.id} item={item} />
+          {filteredItems.map((item, idx) => (
+            <ClaimTicketCard 
+              key={item.id} 
+              item={item} 
+              animationDelay={Math.min(idx * 60, 600)}
+            />
           ))}
         </div>
       )}

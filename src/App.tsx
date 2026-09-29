@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
+import { ScrollToTop } from './components/ScrollToTop';
 import Home from './pages/Home';
 import ItemsList from './pages/ItemsList';
 import ReportForm from './pages/ReportForm';
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <div className="min-h-screen bg-[#f7fafc] flex flex-col font-sans text-slate-800 selection:bg-teal-500/20 selection:text-teal-900">
           <Navbar />
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">

@@ -80,9 +80,12 @@ export function ItemChat({ item, isOwner, onStageAutoAdvance }: ItemChatProps) {
     return () => unsubscribe();
   }, [item.id]);
 
-  // 2. Scroll to bottom when messages change
+  // 2. Scroll to bottom of the chat box only when messages change (prevent page from jumping)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll internally inside the chat container if container is available
+    if (messagesEndRef.current && messages.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }, [messages]);
 
   // 3. Send message handler
