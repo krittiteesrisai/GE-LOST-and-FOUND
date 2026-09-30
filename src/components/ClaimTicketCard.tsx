@@ -56,13 +56,44 @@ export function ClaimTicketCard({ item, onClick, actionSlot, animationDelay }: C
     }
   };
 
-  const formattedDate = item.createdAt?.seconds 
-    ? new Date(item.createdAt.seconds * 1000).toLocaleDateString('th-TH', {
+  const formattedDate = (() => {
+    if (item.createdAt?.seconds) {
+      return new Date(item.createdAt.seconds * 1000).toLocaleDateString('th-TH', {
         day: 'numeric',
         month: 'short',
         year: '2-digit'
-      })
-    : item.date || 'ไม่ระบุ';
+      });
+    }
+    if (item.createdAt instanceof Date) {
+      return item.createdAt.toLocaleDateString('th-TH', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit'
+      });
+    }
+    if (typeof item.createdAt === 'string') {
+      const d = new Date(item.createdAt);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+          year: '2-digit'
+        });
+      }
+    }
+    if (item.date) {
+      const d = new Date(item.date);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+          year: '2-digit'
+        });
+      }
+      return item.date;
+    }
+    return 'ไม่ระบุ';
+  })();
 
   const handleClick = () => {
     if (onClick) {

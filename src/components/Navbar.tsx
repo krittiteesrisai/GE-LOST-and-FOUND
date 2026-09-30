@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMyItems } from '../hooks/useMyItems';
-import { LogOut, Menu, X, PlusCircle, Shield, Compass, Package, Headphones } from 'lucide-react';
+import { LogOut, Menu, X, PlusCircle, Shield, Compass, Package, Headphones, User as UserIcon } from 'lucide-react';
 
 export function Navbar() {
   const location = useLocation();
@@ -152,27 +152,63 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex sm:hidden items-center gap-2">
+          {/* Mobile Right Controls - Always show user avatar or login icon + post + menu */}
+          <div className="flex sm:hidden items-center gap-1.5">
+            {/* User Avatar or Direct Login Button on Mobile Header */}
+            {isAdmin ? (
+              <Link
+                to="/admin"
+                className="p-1.5 text-teal-800 bg-teal-50 border border-teal-200 rounded-xl active:scale-90"
+                title="แผงแอดมิน"
+              >
+                <Shield className="w-4 h-4 text-teal-600" />
+              </Link>
+            ) : currentUser ? (
+              <Link
+                to="/login"
+                className="p-1 rounded-full border border-teal-300 hover:ring-2 hover:ring-teal-200 active:scale-90 transition-all shrink-0"
+                title={`โปรไฟล์: ${currentUser.displayName || currentUser.email}`}
+              >
+                {currentUser.photoURL ? (
+                  <img src={currentUser.photoURL} alt="" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 text-[11px] font-bold border border-teal-200 active:scale-95 transition-all shrink-0"
+                title="เข้าสู่ระบบ"
+              >
+                <UserIcon className="w-3.5 h-3.5 text-teal-600" />
+                <span>เข้าสู่ระบบ</span>
+              </Link>
+            )}
+
             <Link
               to="/my-posts"
-              className="relative p-2 text-slate-600 hover:text-teal-700 rounded-xl hover:bg-slate-100 active:scale-90"
+              className="relative p-1.5 text-slate-600 hover:text-teal-700 rounded-xl hover:bg-slate-100 active:scale-90"
               title="ประกาศของฉัน"
             >
-              <Package className="w-5 h-5" />
+              <Package className="w-4 h-4" />
               {totalCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-teal-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-teal-600 ring-2 ring-white" />
               )}
             </Link>
+
             <Link
               to="/report/lost"
-              className="bg-teal-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all"
+              className="bg-teal-600 text-white px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0"
             >
               ลงประกาศ
             </Link>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 active:scale-90"
+              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 active:scale-90"
               aria-label="เปิดเมนู"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -182,7 +218,78 @@ export function Navbar() {
 
         {/* Mobile Dropdown Menu - High Contrast & Clear Active State */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-slate-200/90 py-3 space-y-1.5 bg-slate-50/80 -mx-4 px-4">
+          <div className="sm:hidden border-t border-slate-200/90 py-3 space-y-2 bg-slate-50/95 -mx-4 px-4 shadow-lg animate-fadeIn">
+            {/* Prominent Login/User Card at top of mobile drawer */}
+            <div className="p-3 rounded-2xl bg-white border border-teal-100 shadow-2xs">
+              {isAdmin ? (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">ผู้ดูแลระบบ (Admin)</div>
+                      <div className="text-[10px] text-teal-600 font-medium">จัดการประกาศและผู้ใช้</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Link to="/admin" className="px-2.5 py-1 bg-teal-700 text-white rounded-lg text-[11px] font-bold">
+                      แผงควบคุม
+                    </Link>
+                    <button onClick={handleLogout} className="p-1 text-slate-400 hover:text-rose-600 rounded-lg">
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : currentUser ? (
+                <div className="flex items-center justify-between gap-2">
+                  <Link to="/login" className="flex items-center gap-2.5 min-w-0">
+                    {currentUser.photoURL ? (
+                      <img src={currentUser.photoURL} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {currentUser.displayName || currentUser.email}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {currentUser.email}
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link to="/login" className="px-2 py-1 text-[11px] font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg">
+                      โปรไฟล์
+                    </Link>
+                    <button onClick={handleLogout} className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg" title="ออกจากระบบ">
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                      <UserIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">ยังไม่ได้เข้าสู่ระบบ</div>
+                      <div className="text-[10px] text-slate-500">ลงชื่อเข้าใช้เพื่อจัดการประกาศ</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/login"
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  >
+                    เข้าสู่ระบบ
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link
               to="/"
               className={`block px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
@@ -228,44 +335,16 @@ export function Navbar() {
             </Link>
             <Link
               to="/report/lost"
-              className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600"
+              className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-white"
             >
               แจ้งของหาย
             </Link>
             <Link
               to="/report/found"
-              className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600"
+              className="block px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-white"
             >
               แจ้งพบของ
             </Link>
-            <div className="pt-2 border-t border-slate-100">
-              {isAdmin ? (
-                <div className="flex items-center justify-between px-3.5 py-2">
-                  <Link to="/admin" className="text-xs font-bold text-slate-900">
-                    แผงควบคุม Admin
-                  </Link>
-                  <button onClick={handleLogout} className="text-xs text-rose-600 font-bold">
-                    ออกจากระบบ
-                  </button>
-                </div>
-              ) : currentUser ? (
-                <div className="flex items-center justify-between px-3.5 py-2">
-                  <span className="text-xs text-slate-700 font-bold">
-                    {currentUser.displayName || currentUser.email}
-                  </span>
-                  <button onClick={handleLogout} className="text-xs text-rose-600 font-bold">
-                    ออกจากระบบ
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="block px-3.5 py-2 rounded-xl text-xs font-bold text-teal-700"
-                >
-                  เข้าสู่ระบบ / บัญชีผู้ใช้
-                </Link>
-              )}
-            </div>
           </div>
         )}
       </div>

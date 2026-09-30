@@ -18,7 +18,9 @@ import {
   Camera,
   Upload,
   Sparkles,
-  Check
+  Check,
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 
 const AVATAR_PRESETS = ['🎒', '🎓', '🦊', '🐱', '🐼', '🦁', '🐻', '🦉', '⚡', '🌟', '🎨', '🚀'];
@@ -554,6 +556,24 @@ export default function Login() {
               {authMode === 'signin' ? 'ลงชื่อเข้าใช้เพื่อจัดการประกาศของคุณ' : 'กรอกข้อมูลเพื่อเริ่มต้นใช้งาน'}
             </p>
           </div>
+
+          {/* In-App Browser Helper (Instagram, Line, FB Webview) */}
+          {(() => {
+            const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || navigator.vendor || '') : '';
+            const isInApp = /Instagram|FBAN|FBAV|Line/i.test(ua);
+            if (!isInApp) return null;
+            return (
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-1.5 animate-fadeIn">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <Globe className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>กำลังเปิดผ่านเบราว์เซอร์ของแอป (Instagram / LINE)</span>
+                </div>
+                <p className="text-[11px] text-amber-700 leading-relaxed">
+                  หากกดปุ่ม Google แล้วไม่ทำงาน ให้กดปุ่ม <strong>···</strong> (สามจุด) มุมขวาบน แล้วเลือก <strong>"เปิดในเบราว์เซอร์ภายนอก"</strong> (Chrome / Safari) หรือใช้อีเมลและรหัสผ่านด้านล่างนี้ได้ทันทีครับ
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Google Button */}
           <button

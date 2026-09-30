@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { collection, query, orderBy, getDocs, doc, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -747,68 +748,83 @@ export default function Admin() {
       )}
 
       {/* Item Delete Modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-xl border border-slate-100 text-center">
-            <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-2 mx-auto">
-              <AlertTriangle className="w-5 h-5" />
+      {itemToDelete && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-[99999] p-4 select-none animate-fadeIn">
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-slate-100 text-center m-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-3 mx-auto">
+              <AlertTriangle className="w-6 h-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">ลบประกาศนี้?</h3>
-            <p className="text-slate-500 text-xs mb-4">ข้อมูลจะถูกลบถาวร</p>
+            <p className="text-slate-500 text-xs mb-4">ข้อมูลจะถูกลบถาวรออกจากระบบ</p>
             <div className="flex gap-2">
               <button 
+                type="button"
                 onClick={() => setItemToDelete(null)}
-                className="flex-1 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200"
+                className="flex-1 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button 
+                type="button"
                 onClick={confirmDeleteItem}
-                className="flex-1 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-xl hover:bg-rose-700"
+                className="flex-1 py-2 bg-rose-600 text-white text-xs font-semibold rounded-xl hover:bg-rose-700 transition-colors cursor-pointer"
               >
                 ลบ
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* User Delete Modal */}
-      {userToDelete && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-xl border border-slate-100 text-center">
-            <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-2 mx-auto">
-              <Trash2 className="w-5 h-5" />
+      {userToDelete && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-[99999] p-4 select-none animate-fadeIn">
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-slate-100 text-center m-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-3 mx-auto">
+              <Trash2 className="w-6 h-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">ลบบัญชีผู้ใช้นี้?</h3>
-            <p className="text-slate-500 text-xs mb-1 font-mono">{userToDelete.email}</p>
+            <p className="text-slate-500 text-xs mb-1 font-mono truncate">{userToDelete.email}</p>
             <p className="text-slate-400 text-[11px] mb-4">บัญชีจะถูกลบออกจากระบบ</p>
             <div className="flex gap-2">
               <button 
+                type="button"
                 onClick={() => setUserToDelete(null)}
-                className="flex-1 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200"
+                className="flex-1 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button 
+                type="button"
                 onClick={confirmDeleteUser}
-                className="flex-1 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-xl hover:bg-rose-700"
+                className="flex-1 py-2 bg-rose-600 text-white text-xs font-semibold rounded-xl hover:bg-rose-700 transition-colors cursor-pointer"
               >
                 ยืนยันลบ
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Status Modal */}
-      {statusAction && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-xl border border-slate-100 text-center">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 mx-auto ${
+      {/* Status Modal (คืนแล้ว / เปิดใหม่) */}
+      {statusAction && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-[99999] p-4 select-none animate-fadeIn">
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-slate-100 text-center m-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 mx-auto ${
               statusAction.action === 'resolve' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
             }`}>
-              {statusAction.action === 'resolve' ? <Check className="w-5 h-5" /> : <RefreshCw className="w-5 h-5" />}
+              {statusAction.action === 'resolve' ? <Check className="w-6 h-6" /> : <RefreshCw className="w-6 h-6" />}
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">เปลี่ยนสถานะประกาศ</h3>
             <p className="text-slate-500 text-xs mb-4">
@@ -816,14 +832,16 @@ export default function Admin() {
             </p>
             <div className="flex gap-2">
               <button 
+                type="button"
                 onClick={() => setStatusAction(null)}
-                className="flex-1 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200"
+                className="flex-1 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button 
+                type="button"
                 onClick={confirmStatusChange}
-                className={`flex-1 py-1.5 text-white text-xs font-semibold rounded-xl ${
+                className={`flex-1 py-2 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer ${
                   statusAction.action === 'resolve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-600 hover:bg-orange-700'
                 }`}
               >
@@ -831,7 +849,8 @@ export default function Admin() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Item, CATEGORIES } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -55,20 +55,18 @@ export default function ItemsList() {
   }, [searchParams]);
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        setLoading(true);
-        const q = query(collection(db, 'items'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const itemsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) } as Item));
-        setItems(itemsData);
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchItems();
+    setLoading(true);
+    const q = query(collection(db, 'items'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const itemsData = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as object) } as Item));
+      setItems(itemsData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error listening to items:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Switch tabs and update URL
@@ -116,9 +114,27 @@ export default function ItemsList() {
         return scoreB - scoreA;
       }
     }
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    const getItemTimestamp = (item: Item): number => {
+      if (item.createdAt?.seconds) {
+        return item.createdAt.seconds * 1000 + (item.createdAt.nanoseconds ? item.createdAt.nanoseconds / 1000000 : 0);
+      }
+      if (item.createdAt instanceof Date) {
+        return item.createdAt.getTime();
+      }
+      if (typeof item.createdAt === 'string') {
+        const t = new Date(item.createdAt).getTime();
+        if (!isNaN(t)) return t;
+      }
+      if (item.date) {
+        const t = new Date(item.date).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    };
+
+    const timeA = getItemTimestamp(a);
+    const timeB = getItemTimestamp(b);
+    return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
   });
 
   const uniqueLocations = Array.from(new Set(items.map(i => i.location).filter(Boolean)));

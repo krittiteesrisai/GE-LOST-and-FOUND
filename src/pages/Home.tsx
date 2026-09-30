@@ -16,7 +16,7 @@ import {
   HelpCircle,
   Tag
 } from 'lucide-react';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Item } from '../types';
 import { useMyItems } from '../hooks/useMyItems';
@@ -46,42 +46,58 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch all items for fast client-side character matching, dashboard stats & recent list
+  // Real-time snapshot of items for dashboard stats, search matching & recent list
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        setLoading(true);
-        const qAll = query(collection(db, 'items'));
-        const allSnapshot = await getDocs(qAll);
-        
-        const itemsList: Item[] = [];
-        let lost = 0;
-        let found = 0;
-        let resolved = 0;
+    setLoading(true);
+    const qAll = query(collection(db, 'items'));
+    
+    const unsubscribe = onSnapshot(qAll, (snapshot) => {
+      const itemsList: Item[] = [];
+      let lost = 0;
+      let found = 0;
+      let resolved = 0;
 
-        allSnapshot.forEach((doc) => {
-          const data = { id: doc.id, ...(doc.data() as object) } as Item;
-          itemsList.push(data);
-          if (data.status === 'resolved') {
-            resolved++;
-          } else {
-            if (data.type === 'lost') lost++;
-            if (data.type === 'found') found++;
-          }
-        });
+      snapshot.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...(docSnap.data() as object) } as Item;
+        itemsList.push(data);
+        if (data.status === 'resolved') {
+          resolved++;
+        } else {
+          if (data.type === 'lost') lost++;
+          if (data.type === 'found') found++;
+        }
+      });
 
-        // Sort items by date desc
-        itemsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Sort items by exact timestamp (createdAt) descending, falling back to item.date
+      const getItemTimestamp = (item: Item): number => {
+        if (item.createdAt?.seconds) {
+          return item.createdAt.seconds * 1000 + (item.createdAt.nanoseconds ? item.createdAt.nanoseconds / 1000000 : 0);
+        }
+        if (item.createdAt instanceof Date) {
+          return item.createdAt.getTime();
+        }
+        if (typeof item.createdAt === 'string') {
+          const t = new Date(item.createdAt).getTime();
+          if (!isNaN(t)) return t;
+        }
+        if (item.date) {
+          const t = new Date(item.date).getTime();
+          if (!isNaN(t)) return t;
+        }
+        return 0;
+      };
 
-        setAllItems(itemsList);
-        setStats({ lost, found, resolved });
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllData();
+      itemsList.sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+
+      setAllItems(itemsList);
+      setStats({ lost, found, resolved });
+      setLoading(false);
+    }, (error) => {
+      console.error("Error listening to items:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Real-time character & keyword matching as user types
@@ -121,7 +137,7 @@ export default function Home() {
   return (
     <div className="space-y-8 sm:space-y-10 max-w-5xl mx-auto pb-10">
       {/* 1. Hero & Interactive Search Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-teal-50/40 to-teal-100/30 border border-teal-100 p-6 sm:p-10 text-center shadow-xs">
+      <section className="relative rounded-3xl bg-gradient-to-br from-white via-teal-50/40 to-teal-100/30 border border-teal-100 p-5 sm:p-10 text-center shadow-xs">
         <div className="max-w-2xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100/80 border border-teal-200 text-teal-800 text-xs font-semibold">
             <span>🎒</span>
@@ -140,20 +156,20 @@ export default function Home() {
           </p>
 
           {/* Interactive Live Search Bar */}
-          <div ref={searchContainerRef} className="relative max-w-xl mx-auto pt-2">
+          <div ref={searchContainerRef} className="relative max-w-xl mx-auto pt-2 z-30">
             <form onSubmit={handleSearchSubmit}>
-              <div className="flex items-center bg-white rounded-2xl border-2 border-teal-200 shadow-md p-1.5 focus-within:ring-3 focus-within:ring-teal-100 focus-within:border-teal-600 transition-all">
-                <Search className="w-5 h-5 text-teal-600 ml-3 shrink-0" />
+              <div className="flex items-center bg-white rounded-2xl border-2 border-teal-200 shadow-md p-1.5 focus-within:ring-3 focus-within:ring-teal-100 focus-within:border-teal-600 transition-all gap-1">
+                <Search className="w-5 h-5 text-teal-600 ml-2.5 sm:ml-3 shrink-0" />
                 <input
                   type="text"
-                  placeholder="ค้นหาตั๋ว ID (TKT-...), ชื่อของหาย, สถานที่, หรือประเภทสิ่งของ..."
+                  placeholder="ค้นหาตั๋ว ID (TKT-...), ชื่อของหาย, สถานที่..."
                   value={quickSearch}
                   onChange={(e) => {
                     setQuickSearch(e.target.value);
                     setIsSearchFocused(true);
                   }}
                   onFocus={() => setIsSearchFocused(true)}
-                  className="w-full px-3 py-2.5 text-xs sm:text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
+                  className="w-full min-w-0 px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 />
                 
                 {quickSearch && (
@@ -163,7 +179,7 @@ export default function Home() {
                       setQuickSearch('');
                       setIsSearchFocused(false);
                     }}
-                    className="p-1.5 mr-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
                     title="ล้างคำค้นหา"
                   >
                     <X className="w-4 h-4" />
@@ -172,7 +188,7 @@ export default function Home() {
 
                 <button
                   type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all shadow-xs cursor-pointer"
+                  className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
                   ค้นหา
                 </button>
@@ -181,19 +197,19 @@ export default function Home() {
 
             {/* Live Character & Keyword Matching Dropdown */}
             {isSearchFocused && quickSearch.trim().length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-teal-100 shadow-xl overflow-hidden z-50 text-left">
-                <div className="p-3 bg-teal-50/80 border-b border-teal-100 flex items-center justify-between text-xs text-teal-900 font-bold">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                    <span>ผลจับคู่คำค้นหา: "{quickSearch}"</span>
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-teal-100 shadow-2xl overflow-hidden z-[100] text-left">
+                <div className="p-3 bg-teal-50/90 border-b border-teal-100 flex items-center justify-between text-xs text-teal-900 font-bold">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                    <span className="truncate">ผลจับคู่คำค้นหา: "{quickSearch}"</span>
                   </div>
-                  <span className="text-[11px] bg-white px-2 py-0.5 rounded-md border border-teal-200 text-teal-700 font-bold font-mono">
+                  <span className="text-[11px] bg-white px-2 py-0.5 rounded-md border border-teal-200 text-teal-700 font-bold font-mono shrink-0">
                     พบ {liveSearchResults.length} รายการ
                   </span>
                 </div>
 
                 {liveSearchResults.length > 0 ? (
-                  <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
                     {liveSearchResults.slice(0, 6).map((item) => {
                       const isLost = item.type === 'lost';
                       const isResolved = item.status === 'resolved';
@@ -207,7 +223,7 @@ export default function Home() {
                           }}
                           className="p-3 hover:bg-teal-50/50 cursor-pointer flex items-center justify-between gap-3 transition-colors group"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
                               {item.imageUrl ? (
                                 <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -215,7 +231,7 @@ export default function Home() {
                                 getCategoryIcon(item.category)
                               )}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="font-display text-xs font-bold text-slate-800 truncate group-hover:text-teal-700 transition-colors">
                                 {item.title}
                               </p>
@@ -249,7 +265,7 @@ export default function Home() {
                       );
                     })}
 
-                    <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
+                    <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
                       <button
                         type="button"
                         onClick={() => {

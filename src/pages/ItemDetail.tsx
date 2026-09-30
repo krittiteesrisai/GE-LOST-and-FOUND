@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -592,9 +593,9 @@ export default function ItemDetail() {
       />
 
       {/* High-Resolution Image Zoom Modal / Lightbox */}
-      {isImageModalOpen && item?.imageUrl && (
+      {isImageModalOpen && item?.imageUrl && createPortal(
         <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-3 sm:p-6 animate-fadeIn select-none"
+          className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex flex-col justify-between p-3 sm:p-6 animate-fadeIn select-none"
           onClick={() => setIsImageModalOpen(false)}
         >
           {/* Top Control Bar */}
@@ -665,7 +666,7 @@ export default function ItemDetail() {
             }}
           >
             <div 
-              className="transition-transform duration-200 ease-out inline-flex items-center justify-center max-w-full max-h-full cursor-zoom-in"
+              className="transition-transform duration-200 ease-out inline-flex items-center justify-center max-w-full max-h-full cursor-zoom-in m-auto"
               style={{ transform: `scale(${zoomLevel})` }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -685,7 +686,8 @@ export default function ItemDetail() {
           <div className="text-center text-[11px] text-white/60 pt-1 pointer-events-none shrink-0">
             แตะที่รูปเพื่อสลับซูม 100% / 200% หรือใช้ปุ่มควบคุมด้านบน | กด Esc หรือแตะพื้นหลังเพื่อปิด
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
